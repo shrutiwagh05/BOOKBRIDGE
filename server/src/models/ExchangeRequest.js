@@ -39,7 +39,7 @@ const exchangeRequestSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected', 'completed', 'cancelled'],
+      enum: ['pending', 'accepted', 'approved', 'rejected', 'active', 'completed', 'cancelled', 'returned'],
       default: 'pending',
     },
     returnDueDate: {
