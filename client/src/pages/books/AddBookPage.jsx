@@ -8,6 +8,7 @@ import ErrorAlert from '../../components/common/ErrorAlert';
 
 const AddBookPage = () => {
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -18,16 +19,23 @@ const AddBookPage = () => {
     description: '',
     locationCollege: '',
   });
+
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!formData.title || !formData.author || !formData.description) {
       setErrorMsg('Please complete title, author, and description.');
       return;
@@ -36,11 +44,35 @@ const AddBookPage = () => {
     try {
       setLoading(true);
       setErrorMsg('');
-      await bookService.createBook(formData);
+
+      const payload = {
+        title: formData.title.trim(),
+        author: formData.author.trim(),
+        category: formData.category,
+        listingType: formData.listingType,
+        price: Number(formData.price) || 0,
+        condition: formData.condition,
+        description: formData.description.trim(),
+
+        // Explicitly send the campus/hostel location
+        locationCollege: formData.locationCollege.trim(),
+      };
+
+      console.log('BookBridge listing payload:', payload);
+
+      await bookService.createBook(payload);
+
       setSuccessMsg('Book submitted! Redirecting to catalog...');
-      setTimeout(() => navigate('/books'), 1200);
+
+      setTimeout(() => {
+        navigate('/books');
+      }, 1200);
     } catch (err) {
-      setErrorMsg(err.message || 'Error listing book. Please check server connection.');
+      setErrorMsg(
+        err.response?.data?.message ||
+        err.message ||
+        'Error listing book. Please check server connection.'
+      );
     } finally {
       setLoading(false);
     }
@@ -48,23 +80,41 @@ const AddBookPage = () => {
 
   return (
     <div className="container" style={{ padding: '2rem 1rem' }}>
-      <div className="paper-card" style={{ maxWidth: '720px', margin: '0 auto' }}>
+      <div
+        className="paper-card"
+        style={{ maxWidth: '720px', margin: '0 auto' }}
+      >
         <div style={{ marginBottom: '1.5rem' }}>
           <Link to="/books" className="text-terracotta text-small">
             &larr; Back to Catalog
           </Link>
+
           <div style={{ marginTop: '0.5rem' }}>
-            <Badge variant="terracotta">Module 2 • Add Book Listing</Badge>
+            <Badge variant="terracotta">
+              Module 2 • Add Book Listing
+            </Badge>
           </div>
-          <h2 style={{ marginTop: '0.5rem' }}>List a Book for the Library</h2>
+
+          <h2 style={{ marginTop: '0.5rem' }}>
+            List a Book for the Library
+          </h2>
+
           <p className="text-muted">
-            Assigned to <strong>Developer 2</strong>. Fill in the volume metadata to offer it to students.
+            Assigned to <strong>Developer 2</strong>. Fill in the volume
+            metadata to offer it to students.
           </p>
         </div>
 
-        <ErrorAlert message={errorMsg} onClose={() => setErrorMsg('')} />
+        <ErrorAlert
+          message={errorMsg}
+          onClose={() => setErrorMsg('')}
+        />
+
         {successMsg && (
-          <div className="bb-alert bb-alert--success" style={{ marginBottom: '1rem' }}>
+          <div
+            className="bb-alert bb-alert--success"
+            style={{ marginBottom: '1rem' }}
+          >
             {successMsg}
           </div>
         )}
@@ -159,7 +209,12 @@ const AddBookPage = () => {
             required
           />
 
-          <Button type="submit" variant="primary" size="lg" isLoading={loading}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            isLoading={loading}
+          >
             Publish Book Listing
           </Button>
         </form>
