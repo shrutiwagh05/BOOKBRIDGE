@@ -1,0 +1,10 @@
+.bb-app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.bb-main-content {
+  flex: 1;
+  padding: var(--space-2xl) 0;
+}

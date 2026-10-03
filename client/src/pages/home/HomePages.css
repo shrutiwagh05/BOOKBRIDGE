@@ -1,0 +1,90 @@
+.bb-home-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xl);
+}
+
+.bb-hero-section {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-md);
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.bb-hero-badge {
+  display: inline-block;
+  margin-bottom: var(--space-md);
+}
+
+.bb-hero-title {
+  margin-bottom: var(--space-md);
+  color: var(--color-ink-black);
+}
+
+.bb-highlight {
+  color: var(--color-terracotta);
+  font-style: italic;
+}
+
+.bb-hero-lead {
+  margin-bottom: var(--space-xl);
+}
+
+.bb-hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+/* Roadmap Grid */
+.bb-foundation-status {
+  background-color: var(--color-warm-ivory);
+}
+
+.bb-modules-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.bb-module-pill {
+  background-color: var(--color-paper-cream);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bb-module-pill strong {
+  font-family: var(--font-heading);
+  color: var(--color-deep-brown);
+  font-size: 0.95rem;
+}
+
+.bb-module-pill span {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--color-ink-black);
+  font-weight: 500;
+}
+
+.bb-module-pill small {
+  font-size: 0.72rem;
+  font-family: monospace;
+}
+
+@media (max-width: 900px) {
+  .bb-modules-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .bb-modules-grid {
+    grid-template-columns: 1fr;
+  }
+}

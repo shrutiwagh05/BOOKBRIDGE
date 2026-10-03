@@ -1,0 +1,82 @@
+/* ==========================================================================
+   Typography: Playfair Display (Headings) & Lora / Inter (Body)
+   ========================================================================== */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--color-ink-black);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+}
+
+h2 {
+  font-size: clamp(1.6rem, 2.8vw, 2.15rem);
+}
+
+h3 {
+  font-size: clamp(1.3rem, 2.2vw, 1.6rem);
+}
+
+h4 {
+  font-size: 1.25rem;
+}
+
+h5 {
+  font-size: 1.1rem;
+}
+
+h6 {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-deep-brown);
+}
+
+p {
+  font-family: var(--font-body);
+  color: var(--color-ink-black);
+  font-size: 1.05rem;
+  line-height: 1.68;
+  margin: 0 0 1rem 0;
+}
+
+p.lead {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: var(--color-deep-brown);
+}
+
+.text-sans {
+  font-family: var(--font-sans);
+}
+
+.text-serif {
+  font-family: var(--font-body);
+}
+
+.text-heading {
+  font-family: var(--font-heading);
+}
+
+.text-muted {
+  color: var(--color-muted-taupe);
+}
+
+.text-terracotta {
+  color: var(--color-terracotta);
+}
+
+.text-deep-brown {
+  color: var(--color-deep-brown);
+}
+
+.text-small {
+  font-size: 0.875rem;
+  line-height: 1.45;
+}

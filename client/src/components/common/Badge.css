@@ -1,0 +1,73 @@
+.bb-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* Sizes */
+.bb-badge--sm {
+  font-size: 0.72rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.bb-badge--md {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.7rem;
+}
+
+/* Specific Bookbridge Types */
+.bb-badge--sell {
+  background-color: #F8EBE6;
+  color: var(--color-terracotta);
+  border: 1px solid rgba(166, 83, 53, 0.3);
+}
+
+.bb-badge--borrow {
+  background-color: #EBF2F7;
+  color: #2B577A;
+  border: 1px solid rgba(43, 87, 122, 0.3);
+}
+
+.bb-badge--exchange {
+  background-color: #EBF5EE;
+  color: #2F6C3F;
+  border: 1px solid rgba(47, 108, 63, 0.3);
+}
+
+/* Condition & Status Variants */
+.bb-badge--new,
+.bb-badge--like-new,
+.bb-badge--available,
+.bb-badge--success {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid rgba(62, 107, 72, 0.3);
+}
+
+.bb-badge--good,
+.bb-badge--reserved,
+.bb-badge--warning {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+  border: 1px solid rgba(179, 116, 30, 0.3);
+}
+
+.bb-badge--fair,
+.bb-badge--danger {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+  border: 1px solid rgba(163, 53, 38, 0.3);
+}
+
+.bb-badge--info {
+  background-color: var(--color-paper-dark);
+  color: var(--color-deep-brown);
+  border: 1px solid var(--color-border-subtle);
+}

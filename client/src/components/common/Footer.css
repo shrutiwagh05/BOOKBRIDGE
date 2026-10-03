@@ -1,0 +1,161 @@
+.bb-footer-wrapper {
+  background-color: #241F1A; /* Deep ink backdrop for grounding */
+  color: #ECE0CE;
+  padding: var(--space-3xl) 0 var(--space-xl) 0;
+  border-top: 3px solid var(--color-terracotta);
+  margin-top: auto;
+}
+
+.bb-footer-grid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1.2fr 1fr;
+  gap: var(--space-2xl);
+  margin-bottom: var(--space-2xl);
+}
+
+.bb-footer-brand-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.bb-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.bb-footer-icon {
+  font-size: 1.8rem;
+}
+
+.bb-footer-name {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  color: var(--color-warm-ivory);
+  letter-spacing: -0.01em;
+}
+
+.bb-footer-about {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #C7B7A2;
+  margin: 0;
+}
+
+.bb-footer-tag {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--color-muted-taupe);
+  letter-spacing: 0.04em;
+}
+
+.bb-footer-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  color: var(--color-warm-ivory);
+  margin-bottom: var(--space-md);
+  position: relative;
+  padding-bottom: var(--space-xs);
+}
+
+.bb-footer-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 24px;
+  height: 2px;
+  background-color: var(--color-terracotta);
+}
+
+.bb-footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.bb-footer-links li,
+.bb-footer-links a {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: #C7B7A2;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.bb-footer-links a:hover {
+  color: var(--color-paper-cream);
+  padding-left: 4px;
+}
+
+.bb-footer-text {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #C7B7A2;
+  margin-bottom: var(--space-md);
+}
+
+.bb-footer-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: #D9CBB7;
+}
+
+.bb-status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #61A875;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #61A875;
+}
+
+.bb-footer-bottom {
+  padding-top: var(--space-lg);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.bb-footer-bottom p {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--color-muted-taupe);
+  margin: 0;
+}
+
+.bb-footer-sub {
+  font-style: italic;
+  font-family: var(--font-body);
+}
+
+@media (max-width: 900px) {
+  .bb-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+  }
+}
+
+@media (max-width: 600px) {
+  .bb-footer-grid {
+    grid-template-columns: 1fr;
+  }
+  .bb-footer-bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+}

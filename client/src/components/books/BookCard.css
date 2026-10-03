@@ -1,0 +1,173 @@
+.bb-book-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-warm-ivory);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-paper);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  position: relative;
+}
+
+.bb-book-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-elevated);
+  border-color: rgba(166, 83, 53, 0.3);
+}
+
+/* Cover Styling */
+.bb-book-card-cover {
+  position: relative;
+  height: 210px;
+  background-color: var(--color-paper-dark);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bb-book-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.bb-book-card:hover .bb-book-cover-img {
+  transform: scale(1.03);
+}
+
+/* Vintage Paper Placeholder Cover */
+.bb-book-cover-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f2e5d3 0%, #e5d2bc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  position: relative;
+  box-shadow: inset 0 0 16px rgba(90, 56, 37, 0.08);
+}
+
+.bb-book-spine-line {
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(90, 56, 37, 0.2);
+  border-right: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.bb-book-placeholder-inner {
+  text-align: center;
+  max-width: 80%;
+}
+
+.bb-book-placeholder-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: var(--space-xs);
+  opacity: 0.85;
+}
+
+.bb-book-placeholder-title {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  color: var(--color-deep-brown);
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Floating Badges */
+.bb-book-card-badges {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+/* Card Body */
+.bb-book-card-body {
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.bb-book-category {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-muted-taupe);
+  margin-bottom: 4px;
+}
+
+.bb-book-title {
+  font-size: 1.15rem;
+  margin: 0 0 4px 0;
+  line-height: 1.3;
+}
+
+.bb-book-title a {
+  color: var(--color-ink-black);
+  text-decoration: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bb-book-title a:hover {
+  color: var(--color-terracotta);
+}
+
+.bb-book-author {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--color-deep-brown);
+  margin: 0 0 var(--space-xs) 0;
+}
+
+.bb-book-location {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--color-muted-taupe);
+  margin: 0 0 var(--space-md) 0;
+}
+
+/* Footer Section */
+.bb-book-card-footer {
+  margin-top: auto;
+  padding-top: var(--space-sm);
+  border-top: 1px dashed var(--color-border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.bb-book-price {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-terracotta);
+}
+
+.bb-book-borrow-note,
+.bb-book-exchange-note {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-deep-brown);
+}
