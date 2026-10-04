@@ -5,7 +5,7 @@ const Book = require('../models/Book');
 // @access  Public
 const getBooks = async (req, res, next) => {
   try {
-    const { category, type, search } = req.query;
+    const { category, type, search, sort, limit } = req.query;
     const filter = { status: 'available' };
 
     if (category) filter.category = category;
@@ -17,13 +17,28 @@ const getBooks = async (req, res, next) => {
       ];
     }
 
-    const books = await Book.find(filter).populate('owner', 'name college rating').sort({ createdAt: -1 });
+    // Sort options: newest (default) | oldest | price-asc | price-desc
+    const sortMap = {
+      newest:     { createdAt: -1 },
+      oldest:     { createdAt: 1 },
+      'price-asc':  { price: 1 },
+      'price-desc': { price: -1 },
+    };
+    const sortOrder = sortMap[sort] || { createdAt: -1 };
+
+    // Optional limit (e.g. for homepage featured sections)
+    const parsedLimit = limit ? parseInt(limit, 10) : 0;
+
+    let query = Book.find(filter).populate('owner', 'name college rating').sort(sortOrder);
+    if (parsedLimit > 0) query = query.limit(parsedLimit);
+
+    const books = await query;
 
     res.status(200).json({
       success: true,
       count: books.length,
       data: books,
-      note: 'Module 2: Book Listing foundation endpoint ready for expansion',
+      note: 'Module 1 & 2: Book catalog endpoint with search, filter, sort, and limit support',
     });
   } catch (error) {
     next(error);

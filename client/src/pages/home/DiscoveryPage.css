@@ -1,0 +1,255 @@
+/* ==========================================================================
+   DiscoveryPage.css — Module 1: Discovery Archive
+   Paper & Ink Design System
+   ========================================================================== */
+
+.bb-discovery-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2xl);
+  padding-top: var(--space-2xl);
+  padding-bottom: var(--space-3xl);
+}
+
+/* ── Page Header ──────────────────────────────────────────────── */
+.bb-discovery-header {
+  max-width: 680px;
+}
+
+.bb-discovery-header h1 {
+  margin-bottom: var(--space-sm);
+}
+
+.bb-discovery-header .lead {
+  margin: 0;
+}
+
+/* ── Filter Panel ─────────────────────────────────────────────── */
+.bb-discovery-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* Search Row */
+.bb-discovery-search-row {
+  width: 100%;
+}
+
+.bb-discovery-search-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--color-paper-cream);
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color var(--transition-normal);
+}
+
+.bb-discovery-search-wrap:focus-within {
+  border-color: var(--color-terracotta);
+  box-shadow: 0 0 0 3px rgba(166, 83, 53, 0.1);
+}
+
+.bb-discovery-search-icon {
+  padding: 0 var(--space-md);
+  color: var(--color-muted-taupe);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.bb-discovery-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--color-ink-black);
+  padding: 0.65rem 0;
+}
+
+.bb-discovery-search-input::placeholder {
+  color: var(--color-muted-taupe);
+}
+
+.bb-discovery-clear-btn {
+  background: none;
+  border: none;
+  color: var(--color-muted-taupe);
+  padding: 0 var(--space-md);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.bb-discovery-clear-btn:hover {
+  color: var(--color-terracotta);
+}
+
+/* Filter Row */
+.bb-discovery-filter-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+  align-items: end;
+}
+
+.bb-discovery-filter-row .bb-input-group {
+  margin-bottom: 0;
+}
+
+/* Meta Row */
+.bb-discovery-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-sm);
+  border-top: 1px dashed var(--color-border-subtle);
+}
+
+.bb-discovery-result-count strong {
+  color: var(--color-terracotta);
+}
+
+/* Active Filter Chips */
+.bb-active-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding-top: var(--space-xs);
+}
+
+.bb-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-paper-cream);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  padding: 3px 10px 3px 12px;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--color-deep-brown);
+}
+
+.bb-filter-chip button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-muted-taupe);
+  font-size: 0.7rem;
+  padding: 0;
+  line-height: 1;
+  transition: color var(--transition-fast);
+}
+
+.bb-filter-chip button:hover {
+  color: var(--color-danger);
+}
+
+/* ── Results ──────────────────────────────────────────────────── */
+.bb-discovery-results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  min-height: 300px;
+}
+
+.bb-discovery-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3xl) 0;
+}
+
+.bb-discovery-bottom-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--color-warm-ivory);
+  border: 1px dashed var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* ── Quick Links Sidebar (below results on mobile, inline on desktop) */
+.bb-discovery-quicklinks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.bb-discovery-quicklinks h4 {
+  color: var(--color-deep-brown);
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  margin-bottom: var(--space-xs);
+}
+
+.bb-quicklink-categories,
+.bb-quicklink-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.bb-quicklink-btn {
+  background: var(--color-paper-cream);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-full);
+  padding: 5px 14px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: var(--color-ink-black);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.bb-quicklink-btn:hover,
+.bb-quicklink-btn.is-active {
+  background: var(--color-terracotta);
+  color: white;
+  border-color: var(--color-terracotta);
+}
+
+.bb-discovery-exchange-link {
+  display: inline-flex;
+  margin-top: var(--space-sm);
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.bb-discovery-exchange-link:hover {
+  opacity: 0.8;
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .bb-discovery-filter-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .bb-discovery-filter-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .bb-discovery-bottom-cta {
+    flex-direction: column;
+    gap: var(--space-md);
+    text-align: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .bb-discovery-filter-row {
+    grid-template-columns: 1fr;
+  }
+  .bb-discovery-meta-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+}
