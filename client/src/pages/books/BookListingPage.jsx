@@ -53,8 +53,9 @@ const BookListingPage = () => {
       try {
         setLoading(true);
         const res = await bookService.getBooks();
-        if (res.data && res.data.length > 0) {
-          setBooks(res.data);
+        const serverBooks = res.data || [];
+        if (serverBooks.length > 0) {
+          setBooks(serverBooks);
         }
       } catch (err) {
         // Fallback to demo items during foundation phase

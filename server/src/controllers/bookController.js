@@ -1,29 +1,40 @@
 const Book = require('../models/Book');
 
-// @desc    Get all books with optional search & filter (Foundation placeholder)
+// @desc    Get all available books with optional search & filters
 // @route   GET /api/books
 // @access  Public
 const getBooks = async (req, res, next) => {
   try {
     const { category, type, search } = req.query;
-    const filter = { status: 'available' };
 
-    if (category) filter.category = category;
-    if (type) filter.listingType = type;
+    const filter = {
+      status: 'available',
+    };
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (type) {
+      filter.listingType = type;
+    }
+
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: 'i' } },
         { author: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
       ];
     }
 
-    const books = await Book.find(filter).populate('owner', 'name college rating').sort({ createdAt: -1 });
+    const books = await Book.find(filter)
+      .populate('owner', 'name college rating')
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       count: books.length,
       data: books,
-      note: 'Module 2: Book Listing foundation endpoint ready for expansion',
     });
   } catch (error) {
     next(error);
@@ -35,7 +46,8 @@ const getBooks = async (req, res, next) => {
 // @access  Public
 const getBookById = async (req, res, next) => {
   try {
-    const book = await Book.findById(req.params.id).populate('owner', 'name email college rating');
+    const book = await Book.findById(req.params.id)
+      .populate('owner', 'name email college rating');
 
     if (!book) {
       return res.status(404).json({
