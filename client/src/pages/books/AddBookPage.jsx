@@ -12,6 +12,7 @@ const AddBookPage = () => {
   const [formData, setFormData] = useState({
     title: '',
     author: '',
+    isbn: '',
     category: 'Computer Science & IT',
     listingType: 'Sell',
     price: '',
@@ -48,6 +49,7 @@ const AddBookPage = () => {
       const payload = {
         title: formData.title.trim(),
         author: formData.author.trim(),
+        isbn: formData.isbn.trim(),
         category: formData.category,
         listingType: formData.listingType,
         price: Number(formData.price) || 0,
@@ -129,6 +131,14 @@ const AddBookPage = () => {
             required
           />
 
+          <Input
+            label="ISBN"
+            name="isbn"
+            value={formData.isbn}
+            onChange={handleChange}
+            placeholder="e.g. 9780262046305"
+          />
+
           <div className="grid-2">
             <Input
               label="Author(s)"
@@ -168,7 +178,10 @@ const AddBookPage = () => {
               options={[
                 { value: 'Sell', label: 'Sell (Set price)' },
                 { value: 'Borrow', label: 'Lend / Borrow' },
-                { value: 'Exchange', label: 'Exchange for another book' },
+                {
+                  value: 'Exchange',
+                  label: 'Exchange for another book',
+                },
               ]}
             />
 
