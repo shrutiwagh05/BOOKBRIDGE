@@ -102,6 +102,8 @@ const BookDetailPage = () => {
     ? book.authors.join(', ')
     : book.author || 'Unknown Author';
 
+  const isbn = book.isbn || 'Not provided';
+
   const listingType =
     book.listingIntent ||
     book.type ||
@@ -266,6 +268,10 @@ const BookDetailPage = () => {
 
               <p className="text-small">
                 {description}
+              </p>
+
+              <p className="text-small">
+                <strong>ISBN:</strong> {isbn}
               </p>
 
               <p className="text-small">
