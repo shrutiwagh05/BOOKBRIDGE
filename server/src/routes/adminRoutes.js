@@ -6,6 +6,7 @@ const {
   updateUserStatus,
   getAdminBooks,
   deleteAdminBook,
+  getAdminRequests,
 } = require('../controllers/adminController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
@@ -18,5 +19,6 @@ router.get('/users', getAdminUsers);
 router.patch('/users/:id/status', updateUserStatus);
 router.get('/books', getAdminBooks);
 router.delete('/books/:id', deleteAdminBook);
+router.get('/requests', getAdminRequests);
 
 module.exports = router;

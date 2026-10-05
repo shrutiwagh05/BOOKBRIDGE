@@ -207,10 +207,62 @@ const deleteAdminBook = async (req, res, next) => {
     next(error);
   }
 };
+// @desc    Get exchange requests for admin monitoring
+// @route   GET /api/admin/requests
+// @access  Private / Admin only
+const getAdminRequests = async (req, res, next) => {
+  try {
+    const { status = '', type = '', search = '' } = req.query;
+
+    const filter = {};
+
+    if (status) {
+      filter.status = status;
+    }
+
+    if (type) {
+      filter.type = type;
+    }
+
+    const requests = await ExchangeRequest.find(filter)
+      .populate('book', 'title author listingType status')
+      .populate('requester', 'name email college')
+      .populate('owner', 'name email college')
+      .populate('offeredBook', 'title author')
+      .sort({ createdAt: -1 });
+
+    let filteredRequests = requests;
+
+    if (search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+
+      filteredRequests = requests.filter((request) => {
+        const bookTitle = request.book?.title?.toLowerCase() || '';
+        const requesterName = request.requester?.name?.toLowerCase() || '';
+        const ownerName = request.owner?.name?.toLowerCase() || '';
+
+        return (
+          bookTitle.includes(searchTerm) ||
+          requesterName.includes(searchTerm) ||
+          ownerName.includes(searchTerm)
+        );
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      count: filteredRequests.length,
+      data: filteredRequests,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   getAdminStats,
   getAdminUsers,
   updateUserStatus,
   getAdminBooks,
   deleteAdminBook,
+  getAdminRequests,
 };
