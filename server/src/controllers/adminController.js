@@ -2,29 +2,129 @@ const User = require('../models/User');
 const Book = require('../models/Book');
 const ExchangeRequest = require('../models/ExchangeRequest');
 
-// @desc    Get system high-level stats for admin overview
+// @desc    Get system statistics for admin dashboard
 // @route   GET /api/admin/stats
 // @access  Private / Admin only
 const getAdminStats = async (req, res, next) => {
   try {
-    const totalUsers = await User.countDocuments();
-    const totalBooks = await Book.countDocuments();
-    const totalExchanges = await ExchangeRequest.countDocuments();
+    const [
+      totalUsers,
+      totalBooks,
+      activeListings,
+      pendingRequests,
+      activeTransactions,
+      completedTransactions,
+    ] = await Promise.all([
+      User.countDocuments(),
+      Book.countDocuments(),
+      Book.countDocuments({ status: 'available' }),
+      ExchangeRequest.countDocuments({ status: 'pending' }),
+      ExchangeRequest.countDocuments({ status: 'active' }),
+      ExchangeRequest.countDocuments({ status: 'completed' }),
+    ]);
 
     res.status(200).json({
       success: true,
       data: {
         totalUsers,
         totalBooks,
-        totalExchanges,
+        activeListings,
+        pendingRequests,
+        activeTransactions,
+        completedTransactions,
       },
-      note: 'Module 5: Admin foundation endpoint ready',
     });
   } catch (error) {
     next(error);
   }
 };
 
+// @desc    Get users for admin management
+// @route   GET /api/admin/users
+// @access  Private / Admin only
+const getAdminUsers = async (req, res, next) => {
+  try {
+    const { search = '', status = '' } = req.query;
+
+    const query = {};
+
+    if (search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+
+      query.$or = [
+        { name: searchRegex },
+        { email: searchRegex },
+      ];
+    }
+
+    if (status === 'active') {
+      query.isActive = true;
+    } else if (status === 'inactive') {
+      query.isActive = false;
+    }
+
+    const users = await User.find(query)
+      .select('name email college department phone role avatar rating isActive createdAt')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Activate or deactivate a user
+// @route   PATCH /api/admin/users/:id/status
+// @access  Private / Admin only
+const updateUserStatus = async (req, res, next) => {
+  try {
+    const { isActive } = req.body;
+
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'isActive must be a boolean value',
+      });
+    }
+
+    if (req.user._id.toString() === req.params.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot change your own account status',
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isActive },
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).select('name email role isActive');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   getAdminStats,
+  getAdminUsers,
+  updateUserStatus,
 };

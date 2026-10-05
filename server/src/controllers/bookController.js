@@ -6,8 +6,7 @@ const Book = require('../models/Book');
 const getBooks = async (req, res, next) => {
   try {
     const { category, type, search, sort, limit } = req.query;
-    const filter = { status: 'available' };
-
+    
     const filter = {
       status: 'available',
     };
