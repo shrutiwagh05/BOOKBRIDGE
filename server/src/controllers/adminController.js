@@ -123,8 +123,94 @@ const updateUserStatus = async (req, res, next) => {
     next(error);
   }
 };
+// @desc    Get books for admin management
+// @route   GET /api/admin/books
+// @access  Private / Admin only
+const getAdminBooks = async (req, res, next) => {
+  try {
+    const {
+      search = '',
+      category = '',
+      type = '',
+      status = '',
+      sort = 'newest',
+    } = req.query;
+
+    const filter = {};
+
+    if (search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+
+      filter.$or = [
+        { title: searchRegex },
+        { author: searchRegex },
+        { description: searchRegex },
+      ];
+    }
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (type) {
+      filter.listingType = type;
+    }
+
+    if (status) {
+      filter.status = status;
+    }
+
+    const sortMap = {
+      newest: { createdAt: -1 },
+      oldest: { createdAt: 1 },
+      'price-asc': { price: 1 },
+      'price-desc': { price: -1 },
+    };
+
+    const sortOrder = sortMap[sort] || sortMap.newest;
+
+    const books = await Book.find(filter)
+      .populate('owner', 'name email college rating')
+      .sort(sortOrder);
+
+    res.status(200).json({
+      success: true,
+      count: books.length,
+      data: books,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Remove a book listing as admin
+// @route   DELETE /api/admin/books/:id
+// @access  Private / Admin only
+const deleteAdminBook = async (req, res, next) => {
+  try {
+    const book = await Book.findById(req.params.id);
+
+    if (!book) {
+      return res.status(404).json({
+        success: false,
+        message: 'Book listing not found',
+      });
+    }
+
+    await Book.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Book listing removed by admin successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   getAdminStats,
   getAdminUsers,
   updateUserStatus,
+  getAdminBooks,
+  deleteAdminBook,
 };
