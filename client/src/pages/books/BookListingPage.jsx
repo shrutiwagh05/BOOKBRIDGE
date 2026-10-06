@@ -7,6 +7,7 @@ import Input from '../../components/common/Input';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
 import bookService from '../../services/bookService';
+import { useAuth } from '../../context/AuthContext';
 
 // Sample fallback books if database has no entries yet
 const initialDemoBooks = [
@@ -43,6 +44,8 @@ const initialDemoBooks = [
 ];
 
 const BookListingPage = () => {
+  const { user } = useAuth();
+
   const [books, setBooks] = useState(initialDemoBooks);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,12 +56,15 @@ const BookListingPage = () => {
       try {
         setLoading(true);
         const res = await bookService.getBooks();
+
         if (res.data && res.data.length > 0) {
           setBooks(res.data);
         }
       } catch (err) {
         // Fallback to demo items during foundation phase
-        console.info('[BookListing] Using demo dataset while database is empty');
+        console.info(
+          '[BookListing] Using demo dataset while database is empty'
+        );
       } finally {
         setLoading(false);
       }
@@ -71,9 +77,29 @@ const BookListingPage = () => {
     const matchSearch =
       b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       b.author.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchType = filterType ? b.listingType === filterType : true;
+
+    const matchType = filterType
+      ? b.listingType === filterType
+      : true;
+
     return matchSearch && matchType;
   });
+
+  // Check whether this book belongs to the currently logged-in user.
+  const isMyBook = (book) => {
+    if (!user || !book.owner) {
+      return false;
+    }
+
+    const ownerId =
+      typeof book.owner === 'object'
+        ? book.owner._id || book.owner.id
+        : book.owner;
+
+    const userId = user._id || user.id;
+
+    return ownerId && userId && String(ownerId) === String(userId);
+  };
 
   return (
     <div className="container" style={{ padding: '2rem 1rem' }}>
@@ -81,19 +107,33 @@ const BookListingPage = () => {
       <div className="paper-card" style={{ marginBottom: '2rem' }}>
         <div className="flex-between">
           <div>
-            <Badge variant="terracotta">Module 2 • Book Listing Foundation</Badge>
-            <h2 style={{ marginTop: '0.5rem' }}>Campus Book Catalog</h2>
+            <Badge variant="terracotta">
+              Module 2 • Book Listing Foundation
+            </Badge>
+
+            <h2 style={{ marginTop: '0.5rem' }}>
+              Campus Book Catalog
+            </h2>
+
             <p className="text-muted">
-              Assigned to <strong>Developer 2</strong>. Filter, search, and view all listed second-hand books.
+              Assigned to <strong>Developer 2</strong>. Filter, search,
+              and view all listed second-hand books.
             </p>
           </div>
+
           <Link to="/books/add">
             <Button variant="primary">+ List a Book</Button>
           </Link>
         </div>
 
         {/* Filter Bar */}
-        <div className="grid-3" style={{ marginTop: '1.5rem', alignItems: 'end' }}>
+        <div
+          className="grid-3"
+          style={{
+            marginTop: '1.5rem',
+            alignItems: 'end',
+          }}
+        >
           <Input
             placeholder="Search by title or author..."
             value={searchQuery}
@@ -105,10 +145,22 @@ const BookListingPage = () => {
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             options={[
-              { value: '', label: 'All Listing Types' },
-              { value: 'Sell', label: 'Buy / Sell Only' },
-              { value: 'Borrow', label: 'Borrow / Lend Only' },
-              { value: 'Exchange', label: 'Exchange Trade Only' },
+              {
+                value: '',
+                label: 'All Listing Types',
+              },
+              {
+                value: 'Sell',
+                label: 'Buy / Sell Only',
+              },
+              {
+                value: 'Borrow',
+                label: 'Borrow / Lend Only',
+              },
+              {
+                value: 'Exchange',
+                label: 'Exchange Trade Only',
+              },
             ]}
           />
 
@@ -141,9 +193,41 @@ const BookListingPage = () => {
         />
       ) : (
         <div className="grid-3">
-          {filteredBooks.map((book) => (
-            <BookCard key={book._id} book={book} actionLabel="View Details" />
-          ))}
+          {filteredBooks.map((book) => {
+            const myBook = isMyBook(book);
+
+            return (
+              <div
+                key={book._id}
+                style={{
+                  position: 'relative',
+                }}
+              >
+                {/* Show this only on the logged-in user's own listing */}
+                {myBook && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '0.75rem',
+                      right: '0.75rem',
+                      zIndex: 2,
+                    }}
+                  >
+                    <Badge variant="terracotta">
+                      Your Listing
+                    </Badge>
+                  </div>
+                )}
+
+                <BookCard
+                  book={book}
+                  actionLabel={
+                    myBook ? 'View Your Listing' : 'View Details'
+                  }
+                />
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

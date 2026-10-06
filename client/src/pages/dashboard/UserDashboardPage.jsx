@@ -65,7 +65,6 @@ const UserDashboardPage = () => {
 
           <h2 className="text-deep-brown">0</h2>
 
-          {/* CHANGED: Now opens My Borrowed Books page */}
           <Link to="/dashboard/borrowed">
             <Button
               size="sm"
@@ -93,6 +92,26 @@ const UserDashboardPage = () => {
               style={{ marginTop: '0.5rem' }}
             >
               View Lent Books
+            </Button>
+          </Link>
+        </div>
+
+        <div className="paper-card">
+          <h4>My Requests</h4>
+
+          <p className="text-muted text-small">
+            Track your borrow and exchange requests
+          </p>
+
+          <h2 className="text-deep-brown">0</h2>
+
+          <Link to="/exchange/requests">
+            <Button
+              size="sm"
+              variant="ghost"
+              style={{ marginTop: '0.5rem' }}
+            >
+              View Requests
             </Button>
           </Link>
         </div>
