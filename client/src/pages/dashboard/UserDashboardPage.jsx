@@ -78,6 +78,26 @@ const UserDashboardPage = () => {
         </div>
 
         <div className="paper-card">
+          <h4>Books Lent</h4>
+
+          <p className="text-muted text-small">
+            Books currently borrowed by others
+          </p>
+
+          <h2 className="text-deep-brown">0</h2>
+
+          <Link to="/dashboard/lent">
+            <Button
+              size="sm"
+              variant="ghost"
+              style={{ marginTop: '0.5rem' }}
+            >
+              View Lent Books
+            </Button>
+          </Link>
+        </div>
+
+        <div className="paper-card">
           <h4>Student Reputation</h4>
 
           <p className="text-muted text-small">

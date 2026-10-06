@@ -20,6 +20,7 @@ import MyRequestsPage from '../pages/exchange/MyRequestsPage';
 import UserDashboardPage from '../pages/dashboard/UserDashboardPage';
 import MyListingsPage from '../pages/dashboard/MyListingsPage';
 import MyBorrowedBooksPage from '../pages/dashboard/MyBorrowedBooksPage';
+import MyLentBooksPage from '../pages/dashboard/MyLentBooksPage';
 import ProfilePage from '../pages/profile/ProfilePage';
 import EditProfilePage from '../pages/profile/EditProfilePage';
 
@@ -85,11 +86,21 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="dashboard/borrowed"
           element={
             <ProtectedRoute>
               <MyBorrowedBooksPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="dashboard/lent"
+          element={
+            <ProtectedRoute>
+              <MyLentBooksPage />
             </ProtectedRoute>
           }
         />
