@@ -1,11 +1,60 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
+import userService from '../../services/userService';
 
 const UserDashboardPage = () => {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
+
+  const [dashboardData, setDashboardData] = useState({
+    listingsCount: 0,
+    borrowedCount: 0,
+    lentCount: 0,
+    pendingRequestsCount: 0,
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError('');
+
+        const response = await userService.getProfile();
+
+        const data = response.data || {};
+
+        setDashboardData({
+          listingsCount: data.listingsCount || 0,
+          borrowedCount: data.borrowedCount || 0,
+          lentCount: data.lentCount || 0,
+          pendingRequestsCount: data.pendingRequestsCount || 0,
+        });
+
+        if (data.user && setUser) {
+          setUser(data.user);
+        }
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
+        setError('Unable to load dashboard activity.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [setUser]);
+
+  const {
+    listingsCount,
+    borrowedCount,
+    lentCount,
+    pendingRequestsCount,
+  } = dashboardData;
 
   return (
     <div className="container" style={{ padding: '2rem 1rem' }}>
@@ -32,11 +81,22 @@ const UserDashboardPage = () => {
         </div>
       </div>
 
+      {error && (
+        <div
+          className="paper-card"
+          style={{
+            marginBottom: '1.5rem',
+            border: '1px solid var(--color-error)',
+          }}
+        >
+          <p className="text-muted">{error}</p>
+        </div>
+      )}
+
       <div
         className="grid-3"
         style={{ gap: '1.5rem', marginBottom: '2rem' }}
       >
-        {/* Active Listings */}
         <div className="paper-card">
           <h4>Active Listings</h4>
 
@@ -44,7 +104,9 @@ const UserDashboardPage = () => {
             Books you currently offer to campus
           </p>
 
-          <h2 className="text-terracotta">0</h2>
+          <h2 className="text-terracotta">
+            {loading ? '...' : listingsCount}
+          </h2>
 
           <Link to="/dashboard/listings">
             <Button
@@ -57,7 +119,6 @@ const UserDashboardPage = () => {
           </Link>
         </div>
 
-        {/* Books Borrowed */}
         <div className="paper-card">
           <h4>Books Borrowed</h4>
 
@@ -65,7 +126,9 @@ const UserDashboardPage = () => {
             Currently reading on loan
           </p>
 
-          <h2 className="text-deep-brown">0</h2>
+          <h2 className="text-deep-brown">
+            {loading ? '...' : borrowedCount}
+          </h2>
 
           <Link to="/dashboard/borrowed">
             <Button
@@ -78,7 +141,6 @@ const UserDashboardPage = () => {
           </Link>
         </div>
 
-        {/* Books Lent */}
         <div className="paper-card">
           <h4>Books Lent</h4>
 
@@ -86,7 +148,9 @@ const UserDashboardPage = () => {
             Books currently borrowed by others
           </p>
 
-          <h2 className="text-deep-brown">0</h2>
+          <h2 className="text-deep-brown">
+            {loading ? '...' : lentCount}
+          </h2>
 
           <Link to="/dashboard/lent">
             <Button
@@ -99,7 +163,6 @@ const UserDashboardPage = () => {
           </Link>
         </div>
 
-        {/* My Requests */}
         <div className="paper-card">
           <h4>My Requests</h4>
 
@@ -107,7 +170,9 @@ const UserDashboardPage = () => {
             Track your borrow and exchange requests
           </p>
 
-          <h2 className="text-deep-brown">0</h2>
+          <h2 className="text-deep-brown">
+            {loading ? '...' : pendingRequestsCount}
+          </h2>
 
           <Link to="/exchange/requests">
             <Button
@@ -120,7 +185,6 @@ const UserDashboardPage = () => {
           </Link>
         </div>
 
-        {/* Transaction History */}
         <div className="paper-card">
           <h4>Transaction History</h4>
 
@@ -139,7 +203,6 @@ const UserDashboardPage = () => {
           </Link>
         </div>
 
-        {/* Student Reputation */}
         <div className="paper-card">
           <h4>Student Reputation</h4>
 
@@ -148,7 +211,7 @@ const UserDashboardPage = () => {
           </p>
 
           <h2 style={{ color: 'var(--color-success)' }}>
-            5.0 ★
+            {user?.rating !== undefined ? `${user.rating} ★` : '5.0 ★'}
           </h2>
 
           <Badge variant="success">
@@ -157,7 +220,6 @@ const UserDashboardPage = () => {
         </div>
       </div>
 
-      {/* User Profile Summary */}
       <div className="paper-card">
         <h3>User Profile Summary</h3>
 
