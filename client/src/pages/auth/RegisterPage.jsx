@@ -11,9 +11,11 @@ const RegisterPage = () => {
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
     college: '',
     department: '',
   });
+
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -21,30 +23,71 @@ const RegisterPage = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (errorMsg) setErrorMsg('');
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (errorMsg) {
+      setErrorMsg('');
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.password) {
-      setErrorMsg('Name, email, and password are required.');
+
+    const name = formData.name.trim();
+    const email = formData.email.trim().toLowerCase();
+    const password = formData.password;
+    const confirmPassword = formData.confirmPassword;
+
+    // Required field validation
+    if (!name || !email || !password || !confirmPassword) {
+      setErrorMsg('Please fill in all required fields.');
       return;
     }
 
-    if (formData.password.length < 6) {
+    // Name validation
+    if (name.length < 2) {
+      setErrorMsg('Please enter a valid name.');
+      return;
+    }
+
+    // Password length validation
+    if (password.length < 6) {
       setErrorMsg('Password must be at least 6 characters long.');
       return;
     }
 
-    setIsSubmitting(true);
-    const result = await register(formData);
-    setIsSubmitting(false);
+    // Confirm password validation
+    if (password !== confirmPassword) {
+      setErrorMsg('Passwords do not match.');
+      return;
+    }
 
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setErrorMsg(result.error || 'Registration failed. Please try again.');
+    setIsSubmitting(true);
+    setErrorMsg('');
+
+    try {
+      const result = await register({
+        name,
+        email,
+        password,
+        college: formData.college.trim(),
+        department: formData.department.trim(),
+      });
+
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        setErrorMsg(result.error || 'Registration failed. Please try again.');
+      }
+    } catch (error) {
+      setErrorMsg(error.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -53,11 +96,18 @@ const RegisterPage = () => {
       <div className="bb-auth-card paper-card">
         <div className="bb-auth-header">
           <span className="bb-auth-quill">📜</span>
+
           <h2>Register for BookBridge</h2>
-          <p className="text-muted">Join your college community to exchange books</p>
+
+          <p className="text-muted">
+            Join your college community to exchange books
+          </p>
         </div>
 
-        <ErrorAlert message={errorMsg} onClose={() => setErrorMsg('')} />
+        <ErrorAlert
+          message={errorMsg}
+          onClose={() => setErrorMsg('')}
+        />
 
         <form onSubmit={handleSubmit} className="bb-auth-form">
           <Input
@@ -65,17 +115,17 @@ const RegisterPage = () => {
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="Shruti Wagh"
+            placeholder="Enter your full name"
             required
           />
 
           <Input
-            label="College Email Address"
+            label="Email Address"
             name="email"
             type="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="student@college.edu"
+            placeholder="student@example.com"
             required
           />
 
@@ -85,14 +135,15 @@ const RegisterPage = () => {
               name="college"
               value={formData.college}
               onChange={handleChange}
-              placeholder="e.g. Engineering College"
+              placeholder="Your college"
             />
+
             <Input
               label="Department / Major"
               name="department"
               value={formData.department}
               onChange={handleChange}
-              placeholder="e.g. Computer Science"
+              placeholder="e.g. Computer Engineering"
             />
           </div>
 
@@ -103,6 +154,16 @@ const RegisterPage = () => {
             value={formData.password}
             onChange={handleChange}
             placeholder="At least 6 characters"
+            required
+          />
+
+          <Input
+            label="Confirm Password"
+            name="confirmPassword"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            placeholder="Enter password again"
             required
           />
 
