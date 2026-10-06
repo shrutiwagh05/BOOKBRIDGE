@@ -23,6 +23,7 @@ import MyBorrowedBooksPage from '../pages/dashboard/MyBorrowedBooksPage';
 import MyLentBooksPage from '../pages/dashboard/MyLentBooksPage';
 import ProfilePage from '../pages/profile/ProfilePage';
 import EditProfilePage from '../pages/profile/EditProfilePage';
+import TransactionHistoryPage from '../pages/dashboard/TransactionHistoryPage';
 
 // Module 5 Pages
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
@@ -101,6 +102,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <MyLentBooksPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="dashboard/transactions"
+          element={
+            <ProtectedRoute>
+              <TransactionHistoryPage />
             </ProtectedRoute>
           }
         />

@@ -36,6 +36,7 @@ const UserDashboardPage = () => {
         className="grid-3"
         style={{ gap: '1.5rem', marginBottom: '2rem' }}
       >
+        {/* Active Listings */}
         <div className="paper-card">
           <h4>Active Listings</h4>
 
@@ -56,6 +57,7 @@ const UserDashboardPage = () => {
           </Link>
         </div>
 
+        {/* Books Borrowed */}
         <div className="paper-card">
           <h4>Books Borrowed</h4>
 
@@ -76,6 +78,7 @@ const UserDashboardPage = () => {
           </Link>
         </div>
 
+        {/* Books Lent */}
         <div className="paper-card">
           <h4>Books Lent</h4>
 
@@ -96,6 +99,7 @@ const UserDashboardPage = () => {
           </Link>
         </div>
 
+        {/* My Requests */}
         <div className="paper-card">
           <h4>My Requests</h4>
 
@@ -116,6 +120,26 @@ const UserDashboardPage = () => {
           </Link>
         </div>
 
+        {/* Transaction History */}
+        <div className="paper-card">
+          <h4>Transaction History</h4>
+
+          <p className="text-muted text-small">
+            View your borrow and exchange history
+          </p>
+
+          <Link to="/dashboard/transactions">
+            <Button
+              size="sm"
+              variant="ghost"
+              style={{ marginTop: '0.5rem' }}
+            >
+              View History
+            </Button>
+          </Link>
+        </div>
+
+        {/* Student Reputation */}
         <div className="paper-card">
           <h4>Student Reputation</h4>
 
@@ -133,6 +157,7 @@ const UserDashboardPage = () => {
         </div>
       </div>
 
+      {/* User Profile Summary */}
       <div className="paper-card">
         <h3>User Profile Summary</h3>
 
