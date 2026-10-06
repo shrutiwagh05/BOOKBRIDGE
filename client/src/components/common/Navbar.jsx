@@ -25,7 +25,9 @@ const Navbar = () => {
           <div className="bb-brand-emblem">📖</div>
           <div className="bb-brand-text">
             <span className="bb-brand-title">BookBridge</span>
-            <span className="bb-brand-tagline">Paper & Ink Campus Library</span>
+            <span className="bb-brand-tagline">
+              Paper & Ink Campus Library
+            </span>
           </div>
         </Link>
 
@@ -45,45 +47,74 @@ const Navbar = () => {
               <NavLink
                 to="/"
                 end
-                className={({ isActive }) => `bb-nav-link ${isActive ? 'active' : ''}`}
+                className={({ isActive }) =>
+                  `bb-nav-link ${isActive ? 'active' : ''}`
+                }
                 onClick={closeMenu}
               >
                 Home
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/books"
-                className={({ isActive }) => `bb-nav-link ${isActive ? 'active' : ''}`}
+                className={({ isActive }) =>
+                  `bb-nav-link ${isActive ? 'active' : ''}`
+                }
                 onClick={closeMenu}
               >
                 Browse Books
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/exchange"
-                className={({ isActive }) => `bb-nav-link ${isActive ? 'active' : ''}`}
+                className={({ isActive }) =>
+                  `bb-nav-link ${isActive ? 'active' : ''}`
+                }
                 onClick={closeMenu}
               >
                 Borrow & Exchange
               </NavLink>
             </li>
+
             {isAuthenticated && (
               <li>
                 <NavLink
                   to="/dashboard"
-                  className={({ isActive }) => `bb-nav-link ${isActive ? 'active' : ''}`}
+                  className={({ isActive }) =>
+                    `bb-nav-link ${isActive ? 'active' : ''}`
+                  }
                   onClick={closeMenu}
                 >
                   Dashboard
                 </NavLink>
               </li>
             )}
+
+            {/* Profile */}
+            {isAuthenticated && (
+              <li>
+                <NavLink
+                  to="/profile"
+                  className={({ isActive }) =>
+                    `bb-nav-link ${isActive ? 'active' : ''}`
+                  }
+                  onClick={closeMenu}
+                >
+                  Profile
+                </NavLink>
+              </li>
+            )}
+
             <li>
               <NavLink
                 to="/admin"
-                className={({ isActive }) => `bb-nav-link ${isActive ? 'active' : ''}`}
+                className={({ isActive }) =>
+                  `bb-nav-link ${isActive ? 'active' : ''}`
+                }
                 onClick={closeMenu}
               >
                 Admin
@@ -100,11 +131,24 @@ const Navbar = () => {
                     + List a Book
                   </Button>
                 </Link>
+
                 <div className="bb-user-info">
-                  <span className="bb-user-name">{user?.name || 'Student'}</span>
-                  {user?.role === 'admin' && <Badge variant="terracotta" size="sm">Admin</Badge>}
+                  <span className="bb-user-name">
+                    {user?.name || 'Student'}
+                  </span>
+
+                  {user?.role === 'admin' && (
+                    <Badge variant="terracotta" size="sm">
+                      Admin
+                    </Badge>
+                  )}
                 </div>
-                <Button size="sm" variant="outline" onClick={handleLogout}>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleLogout}
+                >
                   Logout
                 </Button>
               </div>
@@ -115,6 +159,7 @@ const Navbar = () => {
                     Sign In
                   </Button>
                 </Link>
+
                 <Link to="/register" onClick={closeMenu}>
                   <Button size="sm" variant="primary">
                     Join Library
