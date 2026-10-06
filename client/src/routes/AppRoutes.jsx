@@ -19,6 +19,7 @@ import MyRequestsPage from '../pages/exchange/MyRequestsPage';
 // Module 4 Pages
 import UserDashboardPage from '../pages/dashboard/UserDashboardPage';
 import MyListingsPage from '../pages/dashboard/MyListingsPage';
+import ProfilePage from '../pages/profile/ProfilePage';
 
 // Module 5 Pages
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
@@ -71,11 +72,21 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="dashboard/listings"
           element={
             <ProtectedRoute>
               <MyListingsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
             </ProtectedRoute>
           }
         />
@@ -89,6 +100,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="admin/notifications"
           element={
