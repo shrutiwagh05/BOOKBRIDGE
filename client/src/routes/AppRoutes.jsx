@@ -20,6 +20,7 @@ import MyRequestsPage from '../pages/exchange/MyRequestsPage';
 import UserDashboardPage from '../pages/dashboard/UserDashboardPage';
 import MyListingsPage from '../pages/dashboard/MyListingsPage';
 import ProfilePage from '../pages/profile/ProfilePage';
+import EditProfilePage from '../pages/profile/EditProfilePage';
 
 // Module 5 Pages
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
@@ -43,6 +44,7 @@ const AppRoutes = () => {
         {/* Module 2: Book Listing & Details */}
         <Route path="books" element={<BookListingPage />} />
         <Route path="books/:id" element={<BookDetailPage />} />
+
         <Route
           path="books/add"
           element={
@@ -54,6 +56,7 @@ const AppRoutes = () => {
 
         {/* Module 3: Borrow / Lend / Exchange */}
         <Route path="exchange" element={<ExchangeHubPage />} />
+
         <Route
           path="exchange/requests"
           element={
@@ -82,11 +85,22 @@ const AppRoutes = () => {
           }
         />
 
+        {/* User Profile */}
         <Route
           path="profile"
           element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Edit Profile */}
+        <Route
+          path="profile/edit"
+          element={
+            <ProtectedRoute>
+              <EditProfilePage />
             </ProtectedRoute>
           }
         />
