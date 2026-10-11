@@ -48,13 +48,6 @@ const HOW_IT_WORKS = [
   },
 ];
 
-const SUSTAINABILITY_STATS = [
-  { value: '500+', label: 'Books Circulated', icon: '📚' },
-  { value: '₹2L+', label: 'Student Savings',  icon: '💰' },
-  { value: '300+', label: 'Students Connected', icon: '🎓' },
-  { value: '0',    label: 'Books Wasted',      icon: '♻️' },
-];
-
 /* ─── Component ───────────────────────────────────────────────── */
 const HomePage = () => {
   const navigate   = useNavigate();
@@ -74,7 +67,7 @@ const HomePage = () => {
       try {
         setLoadingFeatured(true);
         const res = await bookService.getBooks({ limit: 6, sort: 'newest' });
-        setFeaturedBooks(res.data || []);
+        setFeaturedBooks(Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
       } catch {
         setFeaturedError('Could not load featured books right now.');
       } finally {
@@ -90,7 +83,7 @@ const HomePage = () => {
       try {
         setLoadingRecent(true);
         const res = await bookService.getBooks({ limit: 4, sort: 'newest' });
-        setRecentBooks(res.data || []);
+        setRecentBooks(Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
       } catch {
         setRecentError('Could not load recent books right now.');
       } finally {
@@ -178,21 +171,6 @@ const HomePage = () => {
         <div className="bb-hero-shelf-rule" aria-hidden="true">
           <span>📖</span><span>📕</span><span>📗</span><span>📘</span>
           <span>📙</span><span>📚</span><span>📖</span><span>📕</span>
-        </div>
-      </section>
-
-      {/* ── SUSTAINABILITY STATS ──────────────────────────────── */}
-      <section className="bb-stats-strip">
-        <div className="container">
-          <div className="bb-stats-grid">
-            {SUSTAINABILITY_STATS.map((s) => (
-              <div key={s.label} className="bb-stat-card">
-                <span className="bb-stat-icon">{s.icon}</span>
-                <span className="bb-stat-value">{s.value}</span>
-                <span className="bb-stat-label">{s.label}</span>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

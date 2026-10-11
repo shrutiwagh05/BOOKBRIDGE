@@ -181,12 +181,15 @@ const ExchangeHubPage = () => {
       setSubmitting(true);
       setModalError('');
 
+      const rawOwner = targetBook.owner;
+      const ownerId = rawOwner && typeof rawOwner === 'object' ? (rawOwner._id || rawOwner.id) : rawOwner;
+
       const payload = {
-        bookId: targetBook._id,
-        ownerId: targetBook.owner?._id || targetBook.owner,
+        bookId: targetBook._id || targetBook.id,
+        ownerId,
         type: requestType,
         durationDays: requestType === 'borrow' ? Number(durationDays) : undefined,
-        offeredBookId: requestType === 'exchange' ? offeredBookId : undefined,
+        offeredBookId: requestType === 'exchange' && offeredBookId ? offeredBookId : undefined,
         message: requestMessage,
       };
 

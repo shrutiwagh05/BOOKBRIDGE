@@ -1,90 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import BookCard from '../../components/books/BookCard';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
 import Input from '../../components/common/Input';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
+import ErrorAlert from '../../components/common/ErrorAlert';
 import bookService from '../../services/bookService';
 
-// Sample fallback books if database has no entries yet
-const initialDemoBooks = [
-  {
-    _id: 'bk-101',
-    title: 'Operating System Concepts (10th Ed)',
-    author: 'Abraham Silberschatz, Peter Baer Galvin',
-    category: 'Computer Science & IT',
-    listingType: 'Sell',
-    price: 350,
-    condition: 'Good',
-    locationCollege: 'Department of Computing',
-  },
-  {
-    _id: 'bk-102',
-    title: 'Database System Concepts',
-    author: 'Henry F. Korth',
-    category: 'Computer Science & IT',
-    listingType: 'Borrow',
-    price: 0,
-    condition: 'Like New',
-    locationCollege: 'Library Stacks 3',
-  },
-  {
-    _id: 'bk-103',
-    title: 'Macroeconomics: Theory & Policy',
-    author: 'N. Gregory Mankiw',
-    category: 'Business & Economics',
-    listingType: 'Exchange',
-    price: 0,
-    condition: 'Fair',
-    locationCollege: 'Commerce Wing',
-  },
-];
-
 const BookListingPage = () => {
-  const [books, setBooks] = useState(initialDemoBooks);
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('');
 
+  // Fetch books from API endpoint
+  const fetchCatalog = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const params = {};
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (filterType) params.type = filterType;
+
+      const res = await bookService.getBooks(params);
+      const serverBooks = res?.data || (Array.isArray(res) ? res : []);
+      setBooks(Array.isArray(serverBooks) ? serverBooks : []);
+    } catch (err) {
+      console.error('[BookListing] Failed to load catalog from API:', err);
+      setError(
+        err.message || 'Unable to retrieve catalog. Please check that the server is running.'
+      );
+      setBooks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, filterType]);
+
   useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        setLoading(true);
-        const res = await bookService.getBooks();
-        if (res.data && res.data.length > 0) {
-          setBooks(res.data);
-        }
-      } catch (err) {
-        // Fallback to demo items during foundation phase
-        console.info('[BookListing] Using demo dataset while database is empty');
-      } finally {
-        setLoading(false);
-      }
-    };
+    const timer = setTimeout(() => {
+      fetchCatalog();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [fetchCatalog]);
 
-    fetchBooks();
-  }, []);
-
-  const filteredBooks = books.filter((b) => {
-    const matchSearch =
-      b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.author.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchType = filterType ? b.listingType === filterType : true;
-    return matchSearch && matchType;
-  });
+  const resetFilters = () => {
+    setSearchQuery('');
+    setFilterType('');
+  };
 
   return (
-    <div className="container" style={{ padding: '2rem 1rem' }}>
-      {/* Module 2 Banner */}
+    <div className="container" style={{ padding: '2rem 1rem', minHeight: '70vh' }}>
+      {/* Module 2 Header Card */}
       <div className="paper-card" style={{ marginBottom: '2rem' }}>
-        <div className="flex-between">
+        <div className="flex-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <Badge variant="terracotta">Module 2 • Book Listing Foundation</Badge>
-            <h2 style={{ marginTop: '0.5rem' }}>Campus Book Catalog</h2>
-            <p className="text-muted">
-              Assigned to <strong>Developer 2</strong>. Filter, search, and view all listed second-hand books.
+            <Badge variant="terracotta">Module 2 • Campus Library Catalog</Badge>
+            <h2 style={{ marginTop: '0.5rem', marginBottom: '0.25rem' }}>Browse Books</h2>
+            <p className="text-muted" style={{ margin: 0 }}>
+              Search and explore second-hand textbooks available for sale, borrow, or exchange across campus.
             </p>
           </div>
           <Link to="/books/add">
@@ -113,38 +92,55 @@ const BookListingPage = () => {
           />
 
           <div style={{ marginBottom: '1rem' }}>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchQuery('');
-                setFilterType('');
-              }}
-            >
+            <Button variant="outline" onClick={resetFilters}>
               Reset Filters
             </Button>
           </div>
         </div>
       </div>
 
+      {/* Error Alert */}
+      {error && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          <ErrorAlert message={error} onClose={() => setError('')} />
+        </div>
+      )}
+
       {/* Catalog Display */}
       {loading ? (
-        <Loader text="Retrieving library catalog..." />
-      ) : filteredBooks.length === 0 ? (
+        <Loader text="Retrieving campus library catalog..." />
+      ) : books.length === 0 ? (
         <EmptyState
-          title="No Books Matched"
-          description="Try clearing your search terms or filter criteria to discover more volumes."
-          actionLabel="Clear Filters"
+          title={searchQuery || filterType ? 'No Books Matched' : 'No Books Listed Yet'}
+          description={
+            searchQuery || filterType
+              ? 'Try clearing your search terms or filter criteria to discover more volumes.'
+              : 'There are no book listings currently available in the catalog. Be the first to list one!'
+          }
+          actionLabel={searchQuery || filterType ? 'Reset Filters' : '+ List a Book Now'}
           onAction={() => {
-            setSearchQuery('');
-            setFilterType('');
+            if (searchQuery || filterType) {
+              resetFilters();
+            } else {
+              navigate('/books/add');
+            }
           }}
         />
       ) : (
-        <div className="grid-3">
-          {filteredBooks.map((book) => (
-            <BookCard key={book._id} book={book} actionLabel="View Details" />
-          ))}
-        </div>
+        <>
+          <div className="flex-between" style={{ marginBottom: '1.25rem' }}>
+            <h3 style={{ margin: 0 }}>Available Volumes</h3>
+            <span className="text-muted text-small">
+              Showing {books.length} {books.length === 1 ? 'book' : 'books'}
+            </span>
+          </div>
+
+          <div className="grid-3">
+            {books.map((book) => (
+              <BookCard key={book._id || book.id} book={book} actionLabel="View Details" />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

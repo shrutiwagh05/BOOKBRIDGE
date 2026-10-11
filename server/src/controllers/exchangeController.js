@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
 const ExchangeRequest = require('../models/ExchangeRequest');
 const Book = require('../models/Book');
+const Notification = require('../models/Notification');
 
 // @desc    Get user's incoming and outgoing exchange/borrow requests (combined)
 // @route   GET /api/exchanges
@@ -81,6 +83,13 @@ const createExchangeRequest = async (req, res, next) => {
       });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(bookId)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Book not found (invalid book ID format)',
+      });
+    }
+
     // 1. Verify book existence and availability
     const book = await Book.findById(bookId);
     if (!book) {
@@ -125,6 +134,13 @@ const createExchangeRequest = async (req, res, next) => {
 
     if (requestType === 'exchange') {
       if (offeredBookId) {
+        if (!mongoose.Types.ObjectId.isValid(offeredBookId)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid offered trade book ID format',
+          });
+        }
+
         const offeredBook = await Book.findById(offeredBookId);
         if (!offeredBook) {
           return res.status(404).json({
@@ -148,7 +164,7 @@ const createExchangeRequest = async (req, res, next) => {
       }
     }
 
-    const targetOwnerId = ownerId || book.owner;
+    const targetOwnerId = (ownerId && mongoose.Types.ObjectId.isValid(ownerId)) ? ownerId : book.owner;
     const loanDuration = durationDays ? Number(durationDays) : (book.rentalPeriodDays || 14);
 
     const exchange = await ExchangeRequest.create({
@@ -161,6 +177,20 @@ const createExchangeRequest = async (req, res, next) => {
       message: message ? message.trim() : '',
       status: 'pending',
     });
+
+    // Create notification for book owner
+    try {
+      await Notification.create({
+        recipient: targetOwnerId,
+        sender: req.user._id,
+        title: requestType === 'exchange' ? 'New Book Exchange Proposal' : 'New Book Borrow Request',
+        message: `${req.user.name || 'A student'} submitted a ${requestType} request for "${book.title}".`,
+        type: 'request',
+        link: '/exchange/requests',
+      });
+    } catch (notifErr) {
+      console.warn('[Notification Error]', notifErr.message);
+    }
 
     const populatedExchange = await ExchangeRequest.findById(exchange._id)
       .populate('book', 'title author images listingType price condition')
@@ -248,6 +278,20 @@ const acceptExchangeRequest = async (req, res, next) => {
       }
     );
 
+    // Create notification for requester
+    try {
+      await Notification.create({
+        recipient: request.requester,
+        sender: req.user._id,
+        title: 'Request Accepted!',
+        message: `Your ${request.type} request for "${book.title}" was accepted by the owner.`,
+        type: 'request',
+        link: '/exchange/requests',
+      });
+    } catch (notifErr) {
+      console.warn('[Notification Error]', notifErr.message);
+    }
+
     const updated = await ExchangeRequest.findById(request._id)
       .populate('book', 'title author images listingType status')
       .populate('requester', 'name email college')
@@ -299,6 +343,20 @@ const rejectExchangeRequest = async (req, res, next) => {
         : `Rejection Note: ${req.body.reason.trim()}`;
     }
     await request.save();
+
+    // Create notification for requester
+    try {
+      await Notification.create({
+        recipient: request.requester,
+        sender: req.user._id,
+        title: 'Request Update',
+        message: `Your ${request.type} request was declined by the owner.`,
+        type: 'request',
+        link: '/exchange/requests',
+      });
+    } catch (notifErr) {
+      console.warn('[Notification Error]', notifErr.message);
+    }
 
     res.status(200).json({
       success: true,
