@@ -16,7 +16,6 @@ const MyListingsPage = () => {
         setError('');
 
         const response = await userService.getProfile();
-
         const myBooks = response.data?.myListings || [];
 
         setBooks(myBooks);
@@ -102,12 +101,6 @@ const MyListingsPage = () => {
         >
           &larr; Back to Dashboard
         </Link>
-
-        <div style={{ marginTop: '0.75rem' }}>
-          <Badge variant="terracotta">
-            Module 4 • My Books
-          </Badge>
-        </div>
 
         <div
           className="flex-between"

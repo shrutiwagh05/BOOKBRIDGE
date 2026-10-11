@@ -25,7 +25,6 @@ const UserDashboardPage = () => {
         setError('');
 
         const response = await userService.getProfile();
-
         const data = response.data || {};
 
         setDashboardData({
@@ -61,18 +60,9 @@ const UserDashboardPage = () => {
       <div className="paper-card" style={{ marginBottom: '2rem' }}>
         <div className="flex-between">
           <div>
-            <Badge variant="terracotta">
-              Module 4 • User Account & Dashboard
-            </Badge>
-
             <h2 style={{ marginTop: '0.5rem' }}>
               Welcome, {user?.name || 'Reader'}
             </h2>
-
-            <p className="text-muted">
-              Assigned to <strong>Developer 4</strong>. Personal library
-              shelf, profile details, and activity ledger.
-            </p>
           </div>
 
           <Link to="/books/add">
@@ -235,14 +225,6 @@ const UserDashboardPage = () => {
         <p>
           <strong>Department:</strong>{' '}
           {user?.department || 'Not specified'}
-        </p>
-
-        <p
-          className="text-small text-muted"
-          style={{ marginTop: '1rem' }}
-        >
-          Developer 4 can build edit profile forms, saved favorites,
-          and transaction history cards here.
         </p>
       </div>
     </div>
