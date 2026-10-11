@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
@@ -54,7 +54,7 @@ const BookCard = ({
           <div className="bb-book-cover-placeholder">
             <span className="bb-book-spine-line"></span>
             <div className="bb-book-placeholder-inner">
-              <span className="bb-book-placeholder-icon">ðŸ“–</span>
+              <span className="bb-book-placeholder-icon">📖</span>
               <span className="bb-book-placeholder-title">
                 {title}
               </span>
@@ -100,7 +100,7 @@ const BookCard = ({
 
         {locationCollege && (
           <p className="bb-book-location">
-            <span>ðŸ“</span> {locationCollege}
+            <span>📍</span> {locationCollege}
           </p>
         )}
 
@@ -109,7 +109,7 @@ const BookCard = ({
           <div className="bb-book-price-block">
             {listingType === 'Sell' ? (
               <span className="bb-book-price">
-                â‚¹{price}
+                ₹{price}
               </span>
             ) : listingType === 'Borrow' ? (
               <span className="bb-book-borrow-note">

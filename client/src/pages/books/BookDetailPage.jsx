@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -167,7 +167,7 @@ const BookDetailPage = () => {
 
           <div style={{ marginTop: '0.75rem' }}>
             <Badge variant="terracotta">
-              Module 2 â€¢ Book Details
+              Module 2 • Book Details
             </Badge>
           </div>
         </div>
@@ -244,7 +244,7 @@ const BookDetailPage = () => {
                 className="text-terracotta"
                 style={{ marginBottom: '1.25rem' }}
               >
-                â‚¹{price}
+                ₹{price}
               </h3>
             )}
 

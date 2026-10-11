@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -351,7 +351,7 @@ const EditBookPage = () => {
 
             <div>
               <label htmlFor="price">
-                <strong>Price (â‚¹)</strong>
+                <strong>Price (₹)</strong>
               </label>
 
               <input

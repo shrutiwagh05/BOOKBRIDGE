@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
@@ -110,7 +110,7 @@ const AddBookPage = () => {
 
           <div style={{ marginTop: '0.5rem' }}>
             <Badge variant="terracotta">
-              Module 2 â€¢ Add Book Listing
+              Module 2 • Add Book Listing
             </Badge>
           </div>
 
@@ -218,7 +218,7 @@ const AddBookPage = () => {
             />
 
             <Input
-              label="Price (â‚¹, if selling)"
+              label="Price (₹, if selling)"
               name="price"
               type="number"
               value={formData.price}
