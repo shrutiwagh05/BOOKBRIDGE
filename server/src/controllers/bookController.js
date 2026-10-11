@@ -1,4 +1,4 @@
-const Book = require('../models/Book');
+﻿const Book = require('../models/Book');
 
 // @desc    Get all available books with optional search & filters
 // @route   GET /api/books
@@ -73,6 +73,7 @@ const createBook = async (req, res, next) => {
     const bookData = {
       ...req.body,
       owner: req.user._id,
+      images: req.file ? [`/uploads/${req.file.filename}`] : [],
     };
 
     const book = await Book.create(bookData);
@@ -146,11 +147,17 @@ const updateBook = async (req, res, next) => {
       'locationCollege',
     ];
 
-    allowedFields.forEach((field) => {
+    allowedFields.filter((field) => field !== 'images').forEach((field) => {
       if (req.body[field] !== undefined) {
         book[field] = req.body[field];
       }
     });
+
+    if (req.file) {
+      book.images = [`/uploads/${req.file.filename}`];
+    } else if (req.body.removeImage === 'true') {
+      book.images = [];
+    }
 
     await book.save();
 

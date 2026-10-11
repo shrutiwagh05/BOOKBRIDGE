@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
@@ -24,6 +24,8 @@ const AddBookPage = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,6 +36,23 @@ const AddBookPage = () => {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setErrorMsg('Choose a JPG, PNG, or WEBP image.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('Image must be 5 MB or smaller.');
+      e.target.value = '';
+      return;
+    }
+    setErrorMsg('');
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -46,21 +65,19 @@ const AddBookPage = () => {
       setLoading(true);
       setErrorMsg('');
 
-      const payload = {
+      const payload = new FormData();
+      Object.entries({
         title: formData.title.trim(),
         author: formData.author.trim(),
         isbn: formData.isbn.trim(),
         category: formData.category,
         listingType: formData.listingType,
-        price: Number(formData.price) || 0,
+        price: String(Number(formData.price) || 0),
         condition: formData.condition,
         description: formData.description.trim(),
-
-        // Explicitly send the campus/hostel location
         locationCollege: formData.locationCollege.trim(),
-      };
-
-      console.log('BookBridge listing payload:', payload);
+      }).forEach(([key, value]) => payload.append(key, value));
+      if (imageFile) payload.append('image', imageFile);
 
       await bookService.createBook(payload);
 
@@ -93,7 +110,7 @@ const AddBookPage = () => {
 
           <div style={{ marginTop: '0.5rem' }}>
             <Badge variant="terracotta">
-              Module 2 • Add Book Listing
+              Module 2 â€¢ Add Book Listing
             </Badge>
           </div>
 
@@ -122,6 +139,21 @@ const AddBookPage = () => {
         )}
 
         <form onSubmit={handleSubmit}>
+          <div style={{ margin: '1rem 0' }}>
+            <label htmlFor="book-image" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>
+              Book Photo (JPG, PNG, WEBP — max 5 MB)
+            </label>
+            <input id="book-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} />
+            {imagePreview && (
+              <div style={{ marginTop: '0.75rem' }}>
+                <img src={imagePreview} alt="Book preview" style={{ width: '150px', height: '180px', objectFit: 'contain', borderRadius: '8px' }} />
+                <button type="button" onClick={() => { setImageFile(null); setImagePreview(''); document.getElementById('book-image').value = ''; }} style={{ display: 'block', marginTop: '0.5rem' }}>
+                  Remove photo
+                </button>
+              </div>
+            )}
+          </div>
+
           <Input
             label="Book Title"
             name="title"
@@ -186,7 +218,7 @@ const AddBookPage = () => {
             />
 
             <Input
-              label="Price (₹, if selling)"
+              label="Price (â‚¹, if selling)"
               name="price"
               type="number"
               value={formData.price}

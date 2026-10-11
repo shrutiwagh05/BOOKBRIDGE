@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -25,6 +25,9 @@ const EditBookPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [existingImage, setExistingImage] = useState('');
+  const [removeImage, setRemoveImage] = useState(false);
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -46,6 +49,9 @@ const EditBookPage = () => {
           description: book.description || '',
           locationCollege: book.locationCollege || '',
         });
+        setExistingImage(book.images?.[0] || book.image || '');
+        setImageFile(null);
+        setRemoveImage(false);
       } catch (err) {
         console.error('[EditBook] Failed to load book:', err);
 
@@ -112,7 +118,14 @@ const EditBookPage = () => {
         locationCollege: formData.locationCollege.trim(),
       };
 
-      await bookService.updateBook(id, payload);
+      const multipartPayload = new FormData();
+      Object.entries(payload).forEach(([key, value]) => {
+        if (value !== undefined) multipartPayload.append(key, value);
+      });
+      if (imageFile) multipartPayload.append('image', imageFile);
+      if (removeImage) multipartPayload.append('removeImage', 'true');
+
+      await bookService.updateBook(id, multipartPayload);
 
       setSuccess('Book listing updated successfully.');
 
@@ -183,6 +196,49 @@ const EditBookPage = () => {
         )}
 
         <form onSubmit={handleSubmit} style={{ marginTop: '1.5rem' }}>
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label htmlFor="edit-book-image"><strong>Book Photo (JPG, PNG or WEBP, max 5 MB)</strong></label>
+            <input
+              id="edit-book-image"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+                  setError('Choose a JPG, PNG or WEBP image up to 5 MB.');
+                  e.target.value = '';
+                  return;
+                }
+                setError('');
+                setImageFile(file);
+                setRemoveImage(false);
+              }}
+              style={{ display: 'block', marginTop: '0.5rem' }}
+            />
+            {(imageFile || existingImage) && !removeImage && (
+              <img
+                src={imageFile ? URL.createObjectURL(imageFile) : existingImage}
+                alt="Book photo preview"
+                style={{ display: 'block', width: '150px', height: '180px', objectFit: 'contain', marginTop: '0.75rem' }}
+              />
+            )}
+            {(imageFile || existingImage) && !removeImage && (
+              <button
+                type="button"
+                onClick={() => {
+                  setImageFile(null);
+                  setExistingImage('');
+                  setRemoveImage(true);
+                  const input = document.getElementById('edit-book-image');
+                  if (input) input.value = '';
+                }}
+                style={{ marginTop: '0.5rem' }}
+              >
+                Remove photo
+              </button>
+            )}
+          </div>
           <div className="grid-2" style={{ gap: '1rem' }}>
             <div>
               <label htmlFor="title">
@@ -295,7 +351,7 @@ const EditBookPage = () => {
 
             <div>
               <label htmlFor="price">
-                <strong>Price (₹)</strong>
+                <strong>Price (â‚¹)</strong>
               </label>
 
               <input

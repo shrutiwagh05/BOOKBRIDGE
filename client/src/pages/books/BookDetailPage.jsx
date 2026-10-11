@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -167,7 +167,7 @@ const BookDetailPage = () => {
 
           <div style={{ marginTop: '0.75rem' }}>
             <Badge variant="terracotta">
-              Module 2 • Book Details
+              Module 2 â€¢ Book Details
             </Badge>
           </div>
         </div>
@@ -190,23 +190,22 @@ const BookDetailPage = () => {
               padding: '2rem',
             }}
           >
-            <div>
-              <span
-                style={{
-                  fontSize: '3.5rem',
-                  display: 'block',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                📖
-              </span>
-
-              <p className="text-muted text-small">
-                Book Cover / Photo Placeholder
-                <br />
-                Book ID: <code>{id}</code>
-              </p>
-            </div>
+            {book?.images?.[0] ? (
+              <img
+                src={book.images[0]}
+                alt={book.title || "Book cover"}
+                style={{ width: "100%", maxHeight: "420px", objectFit: "contain" }}
+              />
+            ) : (
+              <div>
+                <span style={{ fontSize: "3.5rem", display: "block", marginBottom: "0.5rem" }}>📖</span>
+                <p className="text-muted text-small">
+                  No book photo uploaded
+                  <br />
+                  Book ID: <code>{id}</code>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Details Column */}
@@ -245,7 +244,7 @@ const BookDetailPage = () => {
                 className="text-terracotta"
                 style={{ marginBottom: '1.25rem' }}
               >
-                ₹{price}
+                â‚¹{price}
               </h3>
             )}
 
