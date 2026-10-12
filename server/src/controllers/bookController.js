@@ -38,7 +38,7 @@ const getBooks = async (req, res, next) => {
       success: true,
       count: books.length,
       data: books,
-      note: 'Module 1 & 2: Book catalog endpoint with search, filter, sort, and limit support',
+      note: 'Book catalog endpoint with search, filter, sort, and limit support',
     });
   } catch (error) {
     next(error);
