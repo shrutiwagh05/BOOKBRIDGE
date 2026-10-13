@@ -80,7 +80,7 @@ const MyRequestsPage = () => {
       setActionLoading(true);
       setErrorMsg('');
       const res = await exchangeService.acceptRequest(selectedRequest._id);
-      setSuccessMsg(res.message || 'Request accepted! Volume status marked as active loan.');
+      setSuccessMsg(res.message || 'Request accepted successfully.');
       handleCloseModal();
       await fetchRequests();
     } catch (err) {

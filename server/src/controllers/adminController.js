@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Book = require('../models/Book');
 const ExchangeRequest = require('../models/ExchangeRequest');
+const { createNotification } = require('../utils/notificationHelper');
 
 // @desc    Get system statistics for admin dashboard
 // @route   GET /api/admin/stats
@@ -258,6 +259,46 @@ const getAdminRequests = async (req, res, next) => {
     next(error);
   }
 };
+// @desc    Send a notification message to a user
+// @route   POST /api/admin/users/:id/notifications
+// @access  Private / Admin only
+const sendAdminNotification = async (req, res, next) => {
+  try {
+    const { title, message } = req.body;
+
+    if (!title || !title.trim() || !message || !message.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title and message are required',
+      });
+    }
+
+    const user = await User.findById(req.params.id).select('_id name');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const notification = await createNotification({
+      recipient: user._id,
+      sender: req.user._id,
+      title: title.trim(),
+      message: message.trim(),
+      type: 'system',
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Notification sent successfully',
+      data: notification,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   getAdminStats,
   getAdminUsers,
@@ -265,4 +306,5 @@ module.exports = {
   getAdminBooks,
   deleteAdminBook,
   getAdminRequests,
+  sendAdminNotification,
 };

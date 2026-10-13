@@ -4,6 +4,7 @@ import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
 import api from '../../services/api';
+import exchangeService from '../../services/exchangeService';
 
 const BookDetailPage = () => {
   const { id } = useParams();
@@ -12,6 +13,26 @@ const BookDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const handleSendRequest = async () => {
+  try {
+    const payload = {
+      bookId: book._id,
+      ownerId: book.owner?._id || book.owner,
+      type: book.listingType === 'exchange' ? 'exchange' : 'purchase',
+    };
+
+    await exchangeService.createRequest(payload);
+
+    alert('Request sent successfully to the book owner.');
+    setShowRequestModal(false);
+  } catch (err) {
+    alert(
+      err.response?.data?.message ||
+      err.message ||
+      'Unable to send request. Please try again.'
+    );
+  }
+};
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -335,13 +356,7 @@ const BookDetailPage = () => {
 
             <Button
               variant="primary"
-              onClick={() => {
-                alert(
-                  'Request hook ready! Developer 2 & 3 will connect this to /api/exchanges.'
-                );
-
-                setShowRequestModal(false);
-              }}
+              onClick={handleSendRequest}
             >
               Send Request
             </Button>
