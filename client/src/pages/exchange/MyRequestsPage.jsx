@@ -194,7 +194,6 @@ const MyRequestsPage = () => {
               &larr; Back to Borrow & Exchange Hub
             </Link>
             <div style={{ marginTop: '0.5rem' }}>
-              <Badge variant="terracotta">Module 3 • Transaction Ledger</Badge>
             </div>
             <h1 className="bb-requests-title">Campus Borrow & Exchange Ledger</h1>
             <p className="text-muted" style={{ margin: 0 }}>

@@ -234,7 +234,6 @@ const ExchangeHubPage = () => {
       {/* Hero Header */}
       <section className="bb-exchange-hero paper-card">
         <div className="bb-exchange-hero-content">
-          <Badge variant="terracotta">Module 3 • Campus Peer Lending & Barter</Badge>
           <h1 className="bb-exchange-hero-title">Borrow, Lend & Exchange Volumes</h1>
           <p className="lead bb-exchange-hero-desc">
             Circulate textbooks without spending a rupee. Borrow syllabus readings for exam season,
