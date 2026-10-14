@@ -102,6 +102,8 @@ const BookDetailPage = () => {
     ? book.authors.join(', ')
     : book.author || 'Unknown Author';
 
+  const isbn = book.isbn || 'Not provided';
+
   const listingType =
     book.listingIntent ||
     book.type ||
@@ -188,23 +190,22 @@ const BookDetailPage = () => {
               padding: '2rem',
             }}
           >
-            <div>
-              <span
-                style={{
-                  fontSize: '3.5rem',
-                  display: 'block',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                📖
-              </span>
-
-              <p className="text-muted text-small">
-                Book Cover / Photo Placeholder
-                <br />
-                Book ID: <code>{id}</code>
-              </p>
-            </div>
+            {book?.images?.[0] ? (
+              <img
+                src={book.images[0]}
+                alt={book.title || "Book cover"}
+                style={{ width: "100%", maxHeight: "420px", objectFit: "contain" }}
+              />
+            ) : (
+              <div>
+                <span style={{ fontSize: "3.5rem", display: "block", marginBottom: "0.5rem" }}>📖</span>
+                <p className="text-muted text-small">
+                  No book photo uploaded
+                  <br />
+                  Book ID: <code>{id}</code>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Details Column */}
@@ -266,6 +267,10 @@ const BookDetailPage = () => {
 
               <p className="text-small">
                 {description}
+              </p>
+
+              <p className="text-small">
+                <strong>ISBN:</strong> {isbn}
               </p>
 
               <p className="text-small">

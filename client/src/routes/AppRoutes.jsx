@@ -11,6 +11,7 @@ import DiscoveryPage from '../pages/home/DiscoveryPage';
 import BookListingPage from '../pages/books/BookListingPage';
 import BookDetailPage from '../pages/books/BookDetailPage';
 import AddBookPage from '../pages/books/AddBookPage';
+import EditBookPage from '../pages/books/EditBookPage';
 
 // Module 3 Pages
 import ExchangeHubPage from '../pages/exchange/ExchangeHubPage';
@@ -41,7 +42,9 @@ const AppRoutes = () => {
 
         {/* Module 2: Book Listing & Details */}
         <Route path="books" element={<BookListingPage />} />
+
         <Route path="books/:id" element={<BookDetailPage />} />
+
         <Route
           path="books/add"
           element={
@@ -51,8 +54,18 @@ const AppRoutes = () => {
           }
         />
 
+        <Route
+          path="books/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditBookPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Module 3: Borrow / Lend / Exchange */}
         <Route path="exchange" element={<ExchangeHubPage />} />
+
         <Route
           path="exchange/requests"
           element={
@@ -71,6 +84,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="dashboard/listings"
           element={
@@ -89,6 +103,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="admin/notifications"
           element={
