@@ -282,7 +282,7 @@ const MyListingsPage = () => {
                     Delete Listing
                   </Button>
                 </div>
-              </div>
+              </section>
             </div>
           ))}
         </div>
