@@ -5,9 +5,11 @@ import Button from '../../components/common/Button';
 import Modal from '../../components/common/Modal';
 import api from '../../services/api';
 import exchangeService from '../../services/exchangeService';
+import { useAuth } from '../../context/AuthContext';
 
 const BookDetailPage = () => {
   const { id } = useParams();
+  const { user } = useAuth();
 
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -160,6 +162,36 @@ const BookDetailPage = () => {
   const isExchange =
     normalizedType.includes('exchange');
 
+  /*
+   * Check whether this book belongs to the currently
+   * logged-in user.
+   *
+   * The owner can come from the API either as:
+   * owner: "userId"
+   *
+   * or:
+   * owner: { _id: "userId" }
+   */
+  const getOwnerId = () => {
+    if (!book.owner) {
+      return null;
+    }
+
+    if (typeof book.owner === 'object') {
+      return book.owner._id || book.owner.id || null;
+    }
+
+    return book.owner;
+  };
+
+  const currentUserId = user?._id || user?.id;
+  const ownerId = getOwnerId();
+
+  const isMyBook =
+    currentUserId &&
+    ownerId &&
+    String(currentUserId) === String(ownerId);
+
   const badgeVariant = isExchange
     ? 'exchange'
     : isBorrow
@@ -211,23 +243,22 @@ const BookDetailPage = () => {
               padding: '2rem',
             }}
           >
-            <div>
-              <span
-                style={{
-                  fontSize: '3.5rem',
-                  display: 'block',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                📖
-              </span>
-
-              <p className="text-muted text-small">
-                Book Cover / Photo Placeholder
-                <br />
-                Book ID: <code>{id}</code>
-              </p>
-            </div>
+            {book?.images?.[0] ? (
+              <img
+                src={book.images[0]}
+                alt={book.title || "Book cover"}
+                style={{ width: "100%", maxHeight: "420px", objectFit: "contain" }}
+              />
+            ) : (
+              <div>
+                <span style={{ fontSize: "3.5rem", display: "block", marginBottom: "0.5rem" }}>📖</span>
+                <p className="text-muted text-small">
+                  No book photo uploaded
+                  <br />
+                  Book ID: <code>{id}</code>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Details Column */}
@@ -247,6 +278,13 @@ const BookDetailPage = () => {
               <Badge variant="like-new">
                 {condition}
               </Badge>
+
+              {/* Show this only for the logged-in user's book */}
+              {isMyBook && (
+                <Badge variant="terracotta">
+                  Your Listing
+                </Badge>
+              )}
             </div>
 
             <h2>{title}</h2>
@@ -306,32 +344,70 @@ const BookDetailPage = () => {
               )}
             </div>
 
-            <div
-              style={{
-                display: 'flex',
-                gap: '1rem',
-                flexWrap: 'wrap',
-              }}
-            >
-              <Button
-                variant="primary"
-                onClick={() =>
-                  setShowRequestModal(true)
-                }
+            {/* Actions */}
+            {isMyBook ? (
+              /*
+               * Own book:
+               * Do not show Buy / Borrow / Exchange actions.
+               */
+              <div
+                style={{
+                  padding: '1rem',
+                  border: '1px solid var(--color-border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--color-paper-dark)',
+                }}
               >
-                {isExchange
-                  ? 'Request Exchange'
-                  : isBorrow
-                    ? 'Request to Borrow'
-                    : 'Request to Buy'}
-              </Button>
+                <h4 style={{ marginBottom: '0.5rem' }}>
+                  Your Listing
+                </h4>
 
-              <Link to="/exchange">
-                <Button variant="outline">
-                  Propose Exchange
+                <p
+                  className="text-small text-muted"
+                  style={{ marginBottom: '1rem' }}
+                >
+                  This is your own book. You cannot request to
+                  buy, borrow, or exchange your own listing.
+                </p>
+
+                <Link to="/dashboard/listings">
+                  <Button variant="outline">
+                    View My Books
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              /*
+               * Someone else's book:
+               * Keep the existing request functionality unchanged.
+               */
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '1rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Button
+                  variant="primary"
+                  onClick={() =>
+                    setShowRequestModal(true)
+                  }
+                >
+                  {isExchange
+                    ? 'Request Exchange'
+                    : isBorrow
+                      ? 'Request to Borrow'
+                      : 'Request to Buy'}
                 </Button>
-              </Link>
-            </div>
+
+                <Link to="/exchange">
+                  <Button variant="outline">
+                    Propose Exchange
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -47,6 +47,9 @@ const BookCard = ({
         {image ? (
           <img
             src={image}
+        {(image || book.images?.[0]) ? (
+          <img
+            src={image || book.images?.[0]}
             alt={title}
             className="bb-book-cover-img"
           />

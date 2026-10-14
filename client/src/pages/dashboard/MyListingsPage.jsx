@@ -46,6 +46,7 @@ const MyListingsPage = () => {
     if (!confirmed) {
       return;
     }
+    if (!confirmed) return;
 
     try {
       setActionLoading(`delete-${bookId}`);
@@ -74,12 +75,11 @@ const MyListingsPage = () => {
       setActionLoading(`status-${bookId}`);
       setError('');
 
-      const res = await bookService.updateBookStatus(bookId, status);
+      const response = await bookService.updateBookStatus(bookId, status);
+      const updatedBook = response.data;
 
-      const updatedBook = res.data;
-
-      setBooks((prevBooks) =>
-        prevBooks.map((book) =>
+      setBooks((previousBooks) =>
+        previousBooks.map((book) =>
           book._id === bookId
             ? { ...book, status: updatedBook.status }
             : book
@@ -98,6 +98,21 @@ const MyListingsPage = () => {
     }
   };
 
+  const getStatusVariant = (status) => {
+    switch (status) {
+      case 'available':
+        return 'success';
+      case 'reserved':
+      case 'borrowed':
+        return 'terracotta';
+      case 'exchanged':
+      case 'sold':
+        return 'default';
+      default:
+        return 'default';
+    }
+  };
+
   if (loading) {
     return (
       <div className="container" style={{ padding: '2rem 1rem' }}>
@@ -107,36 +122,65 @@ const MyListingsPage = () => {
   }
 
   return (
-    <div className="container" style={{ padding: '2rem 1rem' }}>
-      <div className="paper-card" style={{ marginBottom: '2rem' }}>
-        <Link to="/dashboard" className="text-terracotta text-small">
+    <main className="container" style={{ padding: '2rem 1rem' }}>
+      <section
+        className="paper-card"
+        style={{ marginBottom: '2rem', padding: '1.5rem' }}
+      >
+        <Link
+          to="/dashboard"
+          className="text-terracotta text-small"
+        >
           &larr; Back to Dashboard
         </Link>
 
-        <div style={{ marginTop: '0.5rem' }}>
-          <Badge variant="terracotta">
-            Module 4 &bull; My Listings
-          </Badge>
-        </div>
-
         <div
           className="flex-between"
-          style={{ marginTop: '0.5rem' }}
+          style={{
+            marginTop: '0.75rem',
+            gap: '1rem',
+            flexWrap: 'wrap',
+          }}
         >
           <div>
-            <h2>My Books on Campus Shelf</h2>
-
+            <h1 style={{ marginTop: 0 }}>My Books on Campus Shelf</h1>
             <p className="text-muted">
               Manage the books you have listed on BookBridge.
             </p>
           </div>
 
-          <Link to="/books/add">
-            <Button variant="primary">
-              + Add New Book
-            </Button>
+          <Link to="/books/add" style={{ textDecoration: 'none' }}>
+            <Button variant="primary">+ Add New Book</Button>
           </Link>
         </div>
+      </section>
+
+      {error && (
+        <div
+          className="paper-card"
+          role="alert"
+          style={{
+            marginBottom: '1.5rem',
+            padding: '1rem',
+            color: '#9b2c2c',
+          }}
+        >
+          <p>{error}</p>
+          <Button
+            variant="outline"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
+        </div>
+      )}
+
+      <div
+        className="paper-card"
+        style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem' }}
+      >
+        <strong>{books.length}</strong>{' '}
+        {books.length === 1 ? 'book' : 'books'} listed by you
       </div>
 
       {error && (
@@ -160,19 +204,21 @@ const MyListingsPage = () => {
         <div className="grid-3">
           {books.map((book) => (
             <div key={book._id}>
-              <BookCard
-                book={book}
-                actionLabel="View Details"
-              />
+              <BookCard book={book} actionLabel="View Details" />
 
-              <div
+              <section
                 className="paper-card"
-                style={{
-                  marginTop: '0.75rem',
-                  padding: '1rem',
-                }}
+                style={{ marginTop: '0.75rem', padding: '1rem' }}
               >
                 <div style={{ marginBottom: '0.75rem' }}>
+                  <strong>Listing Status</strong>
+
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <Badge variant={getStatusVariant(book.status)}>
+                      {book.status || 'available'}
+                    </Badge>
+                  </div>
+
                   <label
                     htmlFor={`status-${book._id}`}
                     style={{
@@ -187,14 +233,9 @@ const MyListingsPage = () => {
                   <select
                     id={`status-${book._id}`}
                     value={book.status || 'available'}
-                    disabled={
-                      actionLoading === `status-${book._id}`
-                    }
-                    onChange={(e) =>
-                      handleStatusChange(
-                        book._id,
-                        e.target.value
-                      )
+                    disabled={actionLoading === `status-${book._id}`}
+                    onChange={(event) =>
+                      handleStatusChange(book._id, event.target.value)
                     }
                     style={{
                       width: '100%',
@@ -205,9 +246,9 @@ const MyListingsPage = () => {
                   >
                     <option value="available">Available</option>
                     <option value="reserved">Reserved</option>
+                    <option value="borrowed">Borrowed</option>
                     <option value="exchanged">Exchanged</option>
                     <option value="sold">Sold</option>
-                    <option value="borrowed">Borrowed</option>
                   </select>
                 </div>
 
@@ -246,7 +287,7 @@ const MyListingsPage = () => {
           ))}
         </div>
       )}
-    </div>
+    </main>
   );
 };
 
