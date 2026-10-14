@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import BookCard from '../../components/books/BookCard';
 import Button from '../../components/common/Button';
+import Badge from '../../components/common/Badge';
 import Input from '../../components/common/Input';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
-import Badge from '../../components/common/Badge';
+import ErrorAlert from '../../components/common/ErrorAlert';
 import bookService from '../../services/bookService';
-import { useAuth } from '../../context/AuthContext';
 
 const BookListingPage = () => {
-  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,239 +19,186 @@ const BookListingPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('');
 
-  useEffect(() => {
-    let isMounted = true;
+  const fetchCatalog = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
 
-    const fetchBooks = async () => {
-      try {
-        setLoading(true);
-        setError('');
-
-        const res = await bookService.getBooks();
-        const serverBooks = res.data || [];
-        if (serverBooks.length > 0) {
-          setBooks(serverBooks);
-
-        if (isMounted) {
-          setBooks(Array.isArray(serverBooks) ? serverBooks : []);
-        }
-      } catch (err) {
-        console.error('Failed to load book catalog:', err);
-
-        if (isMounted) {
-          setBooks([]);
-          setError(
-            'The book catalog could not be loaded. Please check your connection and try again.'
-          );
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+      const params = {};
+      if (searchQuery.trim()) {
+        params.search = searchQuery.trim();
       }
-    };
+      if (filterType) {
+        params.type = filterType;
+      }
 
-    fetchBooks();
+      const response = await bookService.getBooks(params);
+      const serverBooks =
+        response?.data || (Array.isArray(response) ? response : []);
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+      setBooks(Array.isArray(serverBooks) ? serverBooks : []);
+    } catch (err) {
+      console.error('[BookListing] Failed to load catalog:', err);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          'Unable to retrieve books. Please try again.'
+      );
+      setBooks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, filterType]);
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchCatalog();
+    }, 250);
 
-  const filteredBooks = books.filter((book) => {
-    const title = (book.title || '').toLowerCase();
-    const author = (book.author || '').toLowerCase();
-
-    const matchesSearch =
-      title.includes(normalizedQuery) ||
-      author.includes(normalizedQuery);
-
-    const matchesType = filterType
-      ? book.listingType === filterType
-      : true;
-
-    return matchesSearch && matchesType;
-  });
+    return () => clearTimeout(timer);
+  }, [fetchCatalog]);
 
   const resetFilters = () => {
     setSearchQuery('');
     setFilterType('');
   };
 
-  const isMyBook = (book) => {
-    if (!user || !book.owner) {
-      return false;
-    }
-
-    const ownerId =
-      typeof book.owner === 'object'
-        ? book.owner._id || book.owner.id
-        : book.owner;
-
-    const userId = user._id || user.id;
-
-    return (
-      ownerId &&
-      userId &&
-      String(ownerId) === String(userId)
-    );
-  };
-
   return (
-    <main
+    <div
       className="container"
-      style={{
-        padding: '2rem 1rem',
-        minHeight: '65vh',
-        color: 'var(--text-primary, #30231e)',
-      }}
+      style={{ padding: '2rem 1rem', minHeight: '70vh' }}
     >
-      <section
+      <div
         className="paper-card"
-        style={{ marginBottom: '2rem', padding: '1.5rem' }}
+        style={{ marginBottom: '2rem' }}
       >
         <div
           className="flex-between"
-          style={{ gap: '1rem', flexWrap: 'wrap' }}
+          style={{
+            gap: '1rem',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+          }}
         >
           <div>
-            <h1 style={{ marginTop: 0, marginBottom: '0.5rem' }}>
-              Campus Book Catalog
+            <Badge variant="terracotta">
+              Browse Books
+            </Badge>
+            <h1 style={{ marginTop: '0.5rem' }}>
+              Discover Books on Campus
             </h1>
-
-            <p className="text-muted" style={{ marginBottom: 0 }}>
-              Discover textbooks to buy, borrow, or exchange with your
-              campus community.
+            <p className="text-muted">
+              Find books to buy, borrow, or exchange with fellow students.
             </p>
           </div>
 
-          <Link to="/books/add" style={{ textDecoration: 'none' }}>
-            <Button variant="primary">+ List a Book</Button>
-          </Link>
+          <Button
+            variant="primary"
+            onClick={() => navigate('/books/add')}
+          >
+            + List a Book
+          </Button>
         </div>
 
         <div
-          className="grid-3"
-          style={{ marginTop: '1.5rem', alignItems: 'end' }}
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            flexWrap: 'wrap',
+            marginTop: '1.5rem',
+          }}
         >
-          <Input
-            placeholder="Search by title or author..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <div style={{ flex: '1 1 240px' }}>
+            <Input
+              type="text"
+              placeholder="Search by title, author, or keyword..."
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+            />
+          </div>
 
-          <Input
-            type="select"
+          <select
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            options={[
-              { value: '', label: 'All Listing Types' },
-              { value: 'Sell', label: 'Buy / Sell' },
-              { value: 'Borrow', label: 'Borrow / Lend' },
-              { value: 'Exchange', label: 'Book Exchange' },
-            ]}
-          />
-
-          <div style={{ marginBottom: '1rem' }}>
-            <Button variant="outline" onClick={resetFilters}>
-              Reset Filters
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      <section aria-live="polite">
-        {loading ? (
-          <Loader text="Loading available books..." />
-        ) : error ? (
-          <div className="paper-card" style={{ padding: '1.5rem' }}>
-            <h2>Unable to Load Books</h2>
-            <p className="text-muted">{error}</p>
-
-            <Button
-              variant="primary"
-              onClick={() => window.location.reload()}
-            >
-              Try Again
-            </Button>
-          </div>
-        ) : filteredBooks.length === 0 ? (
-          <EmptyState
-            title={
-              books.length === 0
-                ? 'No Books Listed Yet'
-                : 'No Books Found'
-            }
-            description={
-              books.length === 0
-                ? 'There are no book listings available yet. You can create the first listing.'
-                : 'Try a different search or clear your filters to see more books.'
-            }
-            actionLabel={
-              books.length === 0 ? 'List a Book' : 'Clear Filters'
-            }
-            onAction={() => {
-              if (books.length === 0) {
-                window.location.assign('/books/add');
-              } else {
-                resetFilters();
-              }
+            onChange={(event) => setFilterType(event.target.value)}
+            aria-label="Filter books by listing type"
+            style={{
+              minWidth: '180px',
+              padding: '0.75rem',
+              borderRadius: '8px',
+              border: '1px solid var(--border-color, #ddd)',
+              background: 'var(--surface, #fff)',
             }}
-          />
-        ) : (
-          <>
-            <div
-              className="flex-between"
-              style={{ marginBottom: '1.25rem', flexWrap: 'wrap' }}
-            >
-              <h2 style={{ margin: 0 }}>Available Listings</h2>
+          >
+            <option value="">All listing types</option>
+            <option value="sale">For Sale</option>
+            <option value="borrow">For Borrowing</option>
+            <option value="exchange">For Exchange</option>
+            <option value="lend">For Lending</option>
+          </select>
 
-              <span className="text-muted">
-                {filteredBooks.length}{' '}
-                {filteredBooks.length === 1 ? 'book' : 'books'} found
-              </span>
-            </div>
+          <Button variant="secondary" onClick={resetFilters}>
+            Reset
+          </Button>
+        </div>
+      </div>
 
-            <div className="grid-3">
-              {filteredBooks.map((book) => {
-                const myBook = isMyBook(book);
+      {error && (
+        <ErrorAlert
+          message={error}
+          onRetry={fetchCatalog}
+        />
+      )}
 
-                return (
-                  <div
-                    key={book._id}
-                    style={{ position: 'relative' }}
-                  >
-                    {myBook && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '0.75rem',
-                          right: '0.75rem',
-                          zIndex: 2,
-                        }}
-                      >
-                        <Badge variant="terracotta">
-                          Your Listing
-                        </Badge>
-                      </div>
-                    )}
+      {loading ? (
+        <Loader text="Loading books..." />
+      ) : books.length === 0 ? (
+        <EmptyState
+          icon="📚"
+          title="No books found"
+          description={
+            searchQuery || filterType
+              ? 'Try changing your search or filters.'
+              : 'There are no books available right now. Be the first to list one!'
+          }
+          actionLabel={
+            searchQuery || filterType ? 'Clear Filters' : 'List a Book'
+          }
+          onAction={() => {
+            if (searchQuery || filterType) {
+              resetFilters();
+            } else {
+              navigate('/books/add');
+            }
+          }}
+        />
+      ) : (
+        <>
+          <div
+            className="flex-between"
+            style={{ marginBottom: '1rem', flexWrap: 'wrap' }}
+          >
+            <h2>Available Books</h2>
+            <span className="text-muted">
+              {books.length} {books.length === 1 ? 'book' : 'books'} found
+            </span>
+          </div>
 
-                    <BookCard
-                      book={book}
-                      actionLabel={
-                        myBook ? 'View Your Listing' : 'View Details'
-                      }
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </section>
-    </main>
+          <div className="book-grid">
+            {books.map((book) => (
+              <BookCard
+                key={book._id || book.id}
+                book={book}
+                actionLabel="View Details"
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      <div style={{ marginTop: '2rem' }}>
+        <Link to="/dashboard">Back to Dashboard</Link>
+      </div>
+    </div>
   );
 };
 
