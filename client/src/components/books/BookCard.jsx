@@ -1,3 +1,4 @@
+```jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Badge from '../common/Badge';
@@ -6,18 +7,6 @@ import './BookCard.css';
 
 /**
  * Shared BookCard component for all modules
- * @param {Object} book - Book data object
- * @param {string} book.title - Title of the book
- * @param {string} book.author - Author name
- * @param {string} book.isbn - ISBN of the book
- * @param {string} book.listingType - 'Sell' | 'Borrow' | 'Exchange'
- * @param {number} book.price - Selling or deposit price
- * @param {string} book.condition - 'New' | 'Like New' | 'Good' | 'Fair'
- * @param {string} book.category - Book category
- * @param {string} book.image - Cover image URL
- * @param {string} book._id - Book ID for navigation
- * @param {function} onAction - Optional custom button action
- * @param {string} actionLabel - Label for the action button
  */
 const BookCard = ({
   book,
@@ -40,24 +29,27 @@ const BookCard = ({
     locationCollege = '',
   } = book;
 
+  const coverImage = image || book.images?.[0] || '';
+
   return (
     <div className={`bb-book-card ${className}`}>
       {/* Book Cover Area */}
       <div className="bb-book-card-cover">
-        {image ? (
+        {coverImage ? (
           <img
-            src={image}
-        {(image || book.images?.[0]) ? (
-          <img
-            src={image || book.images?.[0]}
+            src={coverImage}
             alt={title}
             className="bb-book-cover-img"
           />
         ) : (
           <div className="bb-book-cover-placeholder">
             <span className="bb-book-spine-line"></span>
+
             <div className="bb-book-placeholder-inner">
-              <span className="bb-book-placeholder-icon">📖</span>
+              <span className="bb-book-placeholder-icon">
+                📖
+              </span>
+
               <span className="bb-book-placeholder-title">
                 {title}
               </span>
@@ -149,3 +141,4 @@ const BookCard = ({
 };
 
 export default BookCard;
+```
