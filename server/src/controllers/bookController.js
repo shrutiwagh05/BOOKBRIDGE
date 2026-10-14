@@ -1,11 +1,11 @@
 ﻿const Book = require('../models/Book');
 
-// @desc    Get all available books with optional search & filters
+// @desc    Get all available books with optional search, filters, sorting and limit
 // @route   GET /api/books
 // @access  Public
 const getBooks = async (req, res, next) => {
   try {
-    const { category, type, search } = req.query;
+    const { category, type, search, sort, limit } = req.query;
 
     const filter = {
       status: 'available',
@@ -27,9 +27,28 @@ const getBooks = async (req, res, next) => {
       ];
     }
 
-    const books = await Book.find(filter)
+    // Sort options: newest (default), oldest, price-asc, price-desc
+    const sortMap = {
+      newest: { createdAt: -1 },
+      oldest: { createdAt: 1 },
+      'price-asc': { price: 1 },
+      'price-desc': { price: -1 },
+    };
+
+    const sortOrder = sortMap[sort] || { createdAt: -1 };
+
+    // Optional result limit for homepage sections
+    const parsedLimit = limit ? parseInt(limit, 10) : 0;
+
+    let query = Book.find(filter)
       .populate('owner', 'name college rating')
-      .sort({ createdAt: -1 });
+      .sort(sortOrder);
+
+    if (Number.isFinite(parsedLimit) && parsedLimit > 0) {
+      query = query.limit(Math.min(parsedLimit, 100));
+    }
+
+    const books = await query;
 
     res.status(200).json({
       success: true,
@@ -143,16 +162,16 @@ const updateBook = async (req, res, next) => {
       'exchangePreferences',
       'condition',
       'editionOrYear',
-      'images',
       'locationCollege',
     ];
 
-    allowedFields.filter((field) => field !== 'images').forEach((field) => {
+    allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
         book[field] = req.body[field];
       }
     });
 
+    // Replace or remove the existing image when requested
     if (req.file) {
       book.images = [`/uploads/${req.file.filename}`];
     } else if (req.body.removeImage === 'true') {
