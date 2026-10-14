@@ -2,90 +2,81 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import BookCard from '../../components/books/BookCard';
 import Button from '../../components/common/Button';
-import Badge from '../../components/common/Badge';
 import Input from '../../components/common/Input';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
+import Badge from '../../components/common/Badge';
 import bookService from '../../services/bookService';
 import { useAuth } from '../../context/AuthContext';
-
-// Sample fallback books if database has no entries yet
-const initialDemoBooks = [
-  {
-    _id: 'bk-101',
-    title: 'Operating System Concepts (10th Ed)',
-    author: 'Abraham Silberschatz, Peter Baer Galvin',
-    category: 'Computer Science & IT',
-    listingType: 'Sell',
-    price: 350,
-    condition: 'Good',
-    locationCollege: 'Department of Computing',
-  },
-  {
-    _id: 'bk-102',
-    title: 'Database System Concepts',
-    author: 'Henry F. Korth',
-    category: 'Computer Science & IT',
-    listingType: 'Borrow',
-    price: 0,
-    condition: 'Like New',
-    locationCollege: 'Library Stacks 3',
-  },
-  {
-    _id: 'bk-103',
-    title: 'Macroeconomics: Theory & Policy',
-    author: 'N. Gregory Mankiw',
-    category: 'Business & Economics',
-    listingType: 'Exchange',
-    price: 0,
-    condition: 'Fair',
-    locationCollege: 'Commerce Wing',
-  },
-];
 
 const BookListingPage = () => {
   const { user } = useAuth();
 
-  const [books, setBooks] = useState(initialDemoBooks);
-  const [loading, setLoading] = useState(false);
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('');
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchBooks = async () => {
       try {
         setLoading(true);
-        const res = await bookService.getBooks();
+        setError('');
 
-        if (res.data && res.data.length > 0) {
-          setBooks(res.data);
+        const res = await bookService.getBooks();
+        const serverBooks = res.data || [];
+
+        if (isMounted) {
+          setBooks(Array.isArray(serverBooks) ? serverBooks : []);
         }
       } catch (err) {
-        // Fallback to demo items during foundation phase
-        console.info(
-          '[BookListing] Using demo dataset while database is empty'
-        );
+        console.error('Failed to load book catalog:', err);
+
+        if (isMounted) {
+          setBooks([]);
+          setError(
+            'The book catalog could not be loaded. Please check your connection and try again.'
+          );
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchBooks();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const filteredBooks = books.filter((b) => {
-    const matchSearch =
-      b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.author.toLowerCase().includes(searchQuery.toLowerCase());
+  const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    const matchType = filterType
-      ? b.listingType === filterType
+  const filteredBooks = books.filter((book) => {
+    const title = (book.title || '').toLowerCase();
+    const author = (book.author || '').toLowerCase();
+
+    const matchesSearch =
+      title.includes(normalizedQuery) ||
+      author.includes(normalizedQuery);
+
+    const matchesType = filterType
+      ? book.listingType === filterType
       : true;
 
-    return matchSearch && matchType;
+    return matchesSearch && matchesType;
   });
 
-  // Check whether this book belongs to the currently logged-in user.
+  const resetFilters = () => {
+    setSearchQuery('');
+    setFilterType('');
+  };
+
   const isMyBook = (book) => {
     if (!user || !book.owner) {
       return false;
@@ -98,41 +89,49 @@ const BookListingPage = () => {
 
     const userId = user._id || user.id;
 
-    return ownerId && userId && String(ownerId) === String(userId);
+    return (
+      ownerId &&
+      userId &&
+      String(ownerId) === String(userId)
+    );
   };
 
   return (
-    <div className="container" style={{ padding: '2rem 1rem' }}>
-      {/* Module 2 Banner */}
-      <div className="paper-card" style={{ marginBottom: '2rem' }}>
-        <div className="flex-between">
+    <main
+      className="container"
+      style={{
+        padding: '2rem 1rem',
+        minHeight: '65vh',
+        color: 'var(--text-primary, #30231e)',
+      }}
+    >
+      <section
+        className="paper-card"
+        style={{ marginBottom: '2rem', padding: '1.5rem' }}
+      >
+        <div
+          className="flex-between"
+          style={{ gap: '1rem', flexWrap: 'wrap' }}
+        >
           <div>
-            <Badge variant="terracotta">
-              Module 2 • Book Listing Foundation
-            </Badge>
-
-            <h2 style={{ marginTop: '0.5rem' }}>
+            <h1 style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               Campus Book Catalog
-            </h2>
+            </h1>
 
-            <p className="text-muted">
-              Assigned to <strong>Developer 2</strong>. Filter, search,
-              and view all listed second-hand books.
+            <p className="text-muted" style={{ marginBottom: 0 }}>
+              Discover textbooks to buy, borrow, or exchange with your
+              campus community.
             </p>
           </div>
 
-          <Link to="/books/add">
+          <Link to="/books/add" style={{ textDecoration: 'none' }}>
             <Button variant="primary">+ List a Book</Button>
           </Link>
         </div>
 
-        {/* Filter Bar */}
         <div
           className="grid-3"
-          style={{
-            marginTop: '1.5rem',
-            alignItems: 'end',
-          }}
+          style={{ marginTop: '1.5rem', alignItems: 'end' }}
         >
           <Input
             placeholder="Search by title or author..."
@@ -145,92 +144,111 @@ const BookListingPage = () => {
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             options={[
-              {
-                value: '',
-                label: 'All Listing Types',
-              },
-              {
-                value: 'Sell',
-                label: 'Buy / Sell Only',
-              },
-              {
-                value: 'Borrow',
-                label: 'Borrow / Lend Only',
-              },
-              {
-                value: 'Exchange',
-                label: 'Exchange Trade Only',
-              },
+              { value: '', label: 'All Listing Types' },
+              { value: 'Sell', label: 'Buy / Sell' },
+              { value: 'Borrow', label: 'Borrow / Lend' },
+              { value: 'Exchange', label: 'Book Exchange' },
             ]}
           />
 
           <div style={{ marginBottom: '1rem' }}>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchQuery('');
-                setFilterType('');
-              }}
-            >
+            <Button variant="outline" onClick={resetFilters}>
               Reset Filters
             </Button>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Catalog Display */}
-      {loading ? (
-        <Loader text="Retrieving library catalog..." />
-      ) : filteredBooks.length === 0 ? (
-        <EmptyState
-          title="No Books Matched"
-          description="Try clearing your search terms or filter criteria to discover more volumes."
-          actionLabel="Clear Filters"
-          onAction={() => {
-            setSearchQuery('');
-            setFilterType('');
-          }}
-        />
-      ) : (
-        <div className="grid-3">
-          {filteredBooks.map((book) => {
-            const myBook = isMyBook(book);
+      <section aria-live="polite">
+        {loading ? (
+          <Loader text="Loading available books..." />
+        ) : error ? (
+          <div className="paper-card" style={{ padding: '1.5rem' }}>
+            <h2>Unable to Load Books</h2>
+            <p className="text-muted">{error}</p>
 
-            return (
-              <div
-                key={book._id}
-                style={{
-                  position: 'relative',
-                }}
-              >
-                {/* Show this only on the logged-in user's own listing */}
-                {myBook && (
+            <Button
+              variant="primary"
+              onClick={() => window.location.reload()}
+            >
+              Try Again
+            </Button>
+          </div>
+        ) : filteredBooks.length === 0 ? (
+          <EmptyState
+            title={
+              books.length === 0
+                ? 'No Books Listed Yet'
+                : 'No Books Found'
+            }
+            description={
+              books.length === 0
+                ? 'There are no book listings available yet. You can create the first listing.'
+                : 'Try a different search or clear your filters to see more books.'
+            }
+            actionLabel={
+              books.length === 0 ? 'List a Book' : 'Clear Filters'
+            }
+            onAction={() => {
+              if (books.length === 0) {
+                window.location.assign('/books/add');
+              } else {
+                resetFilters();
+              }
+            }}
+          />
+        ) : (
+          <>
+            <div
+              className="flex-between"
+              style={{ marginBottom: '1.25rem', flexWrap: 'wrap' }}
+            >
+              <h2 style={{ margin: 0 }}>Available Listings</h2>
+
+              <span className="text-muted">
+                {filteredBooks.length}{' '}
+                {filteredBooks.length === 1 ? 'book' : 'books'} found
+              </span>
+            </div>
+
+            <div className="grid-3">
+              {filteredBooks.map((book) => {
+                const myBook = isMyBook(book);
+
+                return (
                   <div
-                    style={{
-                      position: 'absolute',
-                      top: '0.75rem',
-                      right: '0.75rem',
-                      zIndex: 2,
-                    }}
+                    key={book._id}
+                    style={{ position: 'relative' }}
                   >
-                    <Badge variant="terracotta">
-                      Your Listing
-                    </Badge>
-                  </div>
-                )}
+                    {myBook && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '0.75rem',
+                          right: '0.75rem',
+                          zIndex: 2,
+                        }}
+                      >
+                        <Badge variant="terracotta">
+                          Your Listing
+                        </Badge>
+                      </div>
+                    )}
 
-                <BookCard
-                  book={book}
-                  actionLabel={
-                    myBook ? 'View Your Listing' : 'View Details'
-                  }
-                />
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+                    <BookCard
+                      book={book}
+                      actionLabel={
+                        myBook ? 'View Your Listing' : 'View Details'
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </section>
+    </main>
   );
 };
 

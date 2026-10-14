@@ -5,51 +5,44 @@ import Button from './Button';
 import Badge from './Badge';
 import './Navbar.css';
 
-const Navbar = () => {
-  const { user, isAuthenticated, logout } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  const closeMenu = () => setMobileMenuOpen(false);
+  const navLinkClass = ({ isActive }) =>
+    `bb-nav-link ${isActive ? 'active' : ''}`;
 
   return (
     <header className="bb-navbar-wrapper">
       <div className="bb-navbar-container container">
-        {/* Brand Logo */}
         <Link to="/" className="bb-brand" onClick={closeMenu}>
-          <div className="bb-brand-emblem">📖</div>
+          <div className="bb-brand-emblem" aria-hidden="true">
+            📚
+          </div>
           <div className="bb-brand-text">
             <span className="bb-brand-title">BookBridge</span>
             <span className="bb-brand-tagline">
-              Paper & Ink Campus Library
+              Paper &amp; Ink Campus Library
             </span>
           </div>
         </Link>
 
-        {/* Mobile Menu Toggle Button */}
         <button
+          type="button"
           className="bb-mobile-toggle"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle navigation"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          aria-label={mobileMenuOpen ? 'Close navigation' : 'Open navigation'}
+          aria-expanded={mobileMenuOpen}
         >
           {mobileMenuOpen ? '✕' : '☰'}
         </button>
 
-        {/* Navigation Links (Module 1 - 5 access) */}
-        <nav className={`bb-nav ${mobileMenuOpen ? 'is-open' : ''}`}>
+        <nav
+          className={`bb-nav ${mobileMenuOpen ? 'is-open' : ''}`}
+          aria-label="Main navigation"
+        >
           <ul className="bb-nav-links">
             <li>
               <NavLink
                 to="/"
                 end
-                className={({ isActive }) =>
-                  `bb-nav-link ${isActive ? 'active' : ''}`
-                }
+                className={navLinkClass}
                 onClick={closeMenu}
               >
                 Home
@@ -59,9 +52,7 @@ const Navbar = () => {
             <li>
               <NavLink
                 to="/books"
-                className={({ isActive }) =>
-                  `bb-nav-link ${isActive ? 'active' : ''}`
-                }
+                className={navLinkClass}
                 onClick={closeMenu}
               >
                 Browse Books
@@ -71,12 +62,10 @@ const Navbar = () => {
             <li>
               <NavLink
                 to="/exchange"
-                className={({ isActive }) =>
-                  `bb-nav-link ${isActive ? 'active' : ''}`
-                }
+                className={navLinkClass}
                 onClick={closeMenu}
               >
-                Borrow & Exchange
+                Borrow &amp; Exchange
               </NavLink>
             </li>
 
@@ -84,9 +73,7 @@ const Navbar = () => {
               <li>
                 <NavLink
                   to="/dashboard"
-                  className={({ isActive }) =>
-                    `bb-nav-link ${isActive ? 'active' : ''}`
-                  }
+                  className={navLinkClass}
                   onClick={closeMenu}
                 >
                   Dashboard
@@ -94,14 +81,11 @@ const Navbar = () => {
               </li>
             )}
 
-            {/* Profile */}
             {isAuthenticated && (
               <li>
                 <NavLink
                   to="/profile"
-                  className={({ isActive }) =>
-                    `bb-nav-link ${isActive ? 'active' : ''}`
-                  }
+                  className={navLinkClass}
                   onClick={closeMenu}
                 >
                   Profile
@@ -109,20 +93,19 @@ const Navbar = () => {
               </li>
             )}
 
-            <li>
-              <NavLink
-                to="/admin"
-                className={({ isActive }) =>
-                  `bb-nav-link ${isActive ? 'active' : ''}`
-                }
-                onClick={closeMenu}
-              >
-                Admin
-              </NavLink>
-            </li>
+            {isAuthenticated && user?.role === 'admin' && (
+              <li>
+                <NavLink
+                  to="/admin"
+                  className={navLinkClass}
+                  onClick={closeMenu}
+                >
+                  Admin
+                </NavLink>
+              </li>
+            )}
           </ul>
 
-          {/* User Auth Section */}
           <div className="bb-nav-actions">
             {isAuthenticated ? (
               <div className="bb-user-menu">
@@ -136,7 +119,6 @@ const Navbar = () => {
                   <span className="bb-user-name">
                     {user?.name || 'Student'}
                   </span>
-
                   {user?.role === 'admin' && (
                     <Badge variant="terracotta" size="sm">
                       Admin

@@ -1,4 +1,5 @@
-const express = require('express');
+﻿const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
@@ -21,6 +22,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
 // Health Check Route
 app.get('/api/health', (req, res) => {
@@ -65,3 +67,4 @@ app.listen(PORT, () => {
   console.log(`[BookBridge Server] Running on http://localhost:${PORT}`);
   console.log(`[BookBridge Server] Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+
