@@ -1,23 +1,9 @@
-
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Button from './Button';
 import Badge from './Badge';
 import './Navbar.css';
-
-const Navbar = () => {
-  const { user, isAuthenticated, logout } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    setMobileMenuOpen(false);
-    navigate('/');
-  };
-
-  const closeMenu = () => setMobileMenuOpen(false);
 
   const navLinkClass = ({ isActive }) =>
     `bb-nav-link ${isActive ? 'active' : ''}`;
@@ -32,7 +18,7 @@ const Navbar = () => {
           <div className="bb-brand-text">
             <span className="bb-brand-title">BookBridge</span>
             <span className="bb-brand-tagline">
-              Your Campus Book Community
+              Paper &amp; Ink Campus Library
             </span>
           </div>
         </Link>
@@ -62,6 +48,7 @@ const Navbar = () => {
                 Home
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/books"
@@ -71,6 +58,7 @@ const Navbar = () => {
                 Browse Books
               </NavLink>
             </li>
+
             <li>
               <NavLink
                 to="/exchange"
@@ -89,6 +77,18 @@ const Navbar = () => {
                   onClick={closeMenu}
                 >
                   Dashboard
+                </NavLink>
+              </li>
+            )}
+
+            {isAuthenticated && (
+              <li>
+                <NavLink
+                  to="/profile"
+                  className={navLinkClass}
+                  onClick={closeMenu}
+                >
+                  Profile
                 </NavLink>
               </li>
             )}
@@ -141,6 +141,7 @@ const Navbar = () => {
                     Sign In
                   </Button>
                 </Link>
+
                 <Link to="/register" onClick={closeMenu}>
                   <Button size="sm" variant="primary">
                     Join Library

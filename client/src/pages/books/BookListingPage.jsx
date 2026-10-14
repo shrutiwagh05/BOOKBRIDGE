@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import BookCard from '../../components/books/BookCard';
@@ -6,9 +5,13 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
+import Badge from '../../components/common/Badge';
 import bookService from '../../services/bookService';
+import { useAuth } from '../../context/AuthContext';
 
 const BookListingPage = () => {
+  const { user } = useAuth();
+
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -74,6 +77,25 @@ const BookListingPage = () => {
     setFilterType('');
   };
 
+  const isMyBook = (book) => {
+    if (!user || !book.owner) {
+      return false;
+    }
+
+    const ownerId =
+      typeof book.owner === 'object'
+        ? book.owner._id || book.owner.id
+        : book.owner;
+
+    const userId = user._id || user.id;
+
+    return (
+      ownerId &&
+      userId &&
+      String(ownerId) === String(userId)
+    );
+  };
+
   return (
     <main
       className="container"
@@ -87,14 +109,18 @@ const BookListingPage = () => {
         className="paper-card"
         style={{ marginBottom: '2rem', padding: '1.5rem' }}
       >
-        <div className="flex-between" style={{ gap: '1rem', flexWrap: 'wrap' }}>
+        <div
+          className="flex-between"
+          style={{ gap: '1rem', flexWrap: 'wrap' }}
+        >
           <div>
             <h1 style={{ marginTop: 0, marginBottom: '0.5rem' }}>
               Campus Book Catalog
             </h1>
+
             <p className="text-muted" style={{ marginBottom: 0 }}>
-              Discover textbooks to buy, borrow, or exchange with your campus
-              community.
+              Discover textbooks to buy, borrow, or exchange with your
+              campus community.
             </p>
           </div>
 
@@ -140,6 +166,7 @@ const BookListingPage = () => {
           <div className="paper-card" style={{ padding: '1.5rem' }}>
             <h2>Unable to Load Books</h2>
             <p className="text-muted">{error}</p>
+
             <Button
               variant="primary"
               onClick={() => window.location.reload()}
@@ -149,13 +176,19 @@ const BookListingPage = () => {
           </div>
         ) : filteredBooks.length === 0 ? (
           <EmptyState
-            title={books.length === 0 ? 'No Books Listed Yet' : 'No Books Found'}
+            title={
+              books.length === 0
+                ? 'No Books Listed Yet'
+                : 'No Books Found'
+            }
             description={
               books.length === 0
                 ? 'There are no book listings available yet. You can create the first listing.'
                 : 'Try a different search or clear your filters to see more books.'
             }
-            actionLabel={books.length === 0 ? 'List a Book' : 'Clear Filters'}
+            actionLabel={
+              books.length === 0 ? 'List a Book' : 'Clear Filters'
+            }
             onAction={() => {
               if (books.length === 0) {
                 window.location.assign('/books/add');
@@ -171,6 +204,7 @@ const BookListingPage = () => {
               style={{ marginBottom: '1.25rem', flexWrap: 'wrap' }}
             >
               <h2 style={{ margin: 0 }}>Available Listings</h2>
+
               <span className="text-muted">
                 {filteredBooks.length}{' '}
                 {filteredBooks.length === 1 ? 'book' : 'books'} found
@@ -178,13 +212,38 @@ const BookListingPage = () => {
             </div>
 
             <div className="grid-3">
-              {filteredBooks.map((book) => (
-                <BookCard
-                  key={book._id}
-                  book={book}
-                  actionLabel="View Details"
-                />
-              ))}
+              {filteredBooks.map((book) => {
+                const myBook = isMyBook(book);
+
+                return (
+                  <div
+                    key={book._id}
+                    style={{ position: 'relative' }}
+                  >
+                    {myBook && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '0.75rem',
+                          right: '0.75rem',
+                          zIndex: 2,
+                        }}
+                      >
+                        <Badge variant="terracotta">
+                          Your Listing
+                        </Badge>
+                      </div>
+                    )}
+
+                    <BookCard
+                      book={book}
+                      actionLabel={
+                        myBook ? 'View Your Listing' : 'View Details'
+                      }
+                    />
+                  </div>
+                );
+              })}
             </div>
           </>
         )}

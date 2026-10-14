@@ -20,6 +20,11 @@ import MyRequestsPage from '../pages/exchange/MyRequestsPage';
 // Module 4 Pages
 import UserDashboardPage from '../pages/dashboard/UserDashboardPage';
 import MyListingsPage from '../pages/dashboard/MyListingsPage';
+import MyBorrowedBooksPage from '../pages/dashboard/MyBorrowedBooksPage';
+import MyLentBooksPage from '../pages/dashboard/MyLentBooksPage';
+import ProfilePage from '../pages/profile/ProfilePage';
+import EditProfilePage from '../pages/profile/EditProfilePage';
+import TransactionHistoryPage from '../pages/dashboard/TransactionHistoryPage';
 
 // Module 5 Pages
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
@@ -90,6 +95,52 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <MyListingsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="dashboard/borrowed"
+          element={
+            <ProtectedRoute>
+              <MyBorrowedBooksPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="dashboard/lent"
+          element={
+            <ProtectedRoute>
+              <MyLentBooksPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="dashboard/transactions"
+          element={
+            <ProtectedRoute>
+              <TransactionHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* User Profile */}
+        <Route
+          path="profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Edit Profile */}
+        <Route
+          path="profile/edit"
+          element={
+            <ProtectedRoute>
+              <EditProfilePage />
             </ProtectedRoute>
           }
         />
