@@ -25,7 +25,7 @@ const MyListingsPage = () => {
       setError('');
 
       const res = await bookService.getMyListings();
-      setBooks(res.data || []);
+      setBooks(res.data?.data ?? res.data ?? []);
     } catch (err) {
       console.error('[MyListings] Failed to load listings:', err);
       setError(
@@ -76,7 +76,7 @@ const MyListingsPage = () => {
       setError('');
 
       const response = await bookService.updateBookStatus(bookId, status);
-      const updatedBook = response.data;
+      const updatedBook = response.data?.data ?? response.data;
 
       setBooks((previousBooks) =>
         previousBooks.map((book) =>
