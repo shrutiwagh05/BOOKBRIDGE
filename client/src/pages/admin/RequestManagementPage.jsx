@@ -23,7 +23,7 @@ const RequestManagementPage = () => {
       if (type) params.type = type;
 
       const response = await adminService.getRequests(params);
-      setRequests(response.data || []);
+      setRequests(response.data?.data ?? response.data ?? []);
     } catch (err) {
       setError('Unable to load requests and transactions.');
     } finally {
