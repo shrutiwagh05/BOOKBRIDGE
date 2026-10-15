@@ -32,7 +32,8 @@ const EditProfilePage = () => {
         setError('');
 
         const response = await userService.getProfile();
-        const profileUser = response.data.user;
+        const profileData = response.data?.data ?? response.data;
+        const profileUser = profileData.user;
 
         setFormData({
           name: profileUser?.name || '',

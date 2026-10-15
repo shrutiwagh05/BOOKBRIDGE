@@ -18,7 +18,7 @@ const getNotifications = async (req, res, next) => {
       success: true,
       unreadCount,
       data: notifications,
-      note: 'Module 5: Notifications foundation endpoint ready',
+      
     });
   } catch (error) {
     next(error);

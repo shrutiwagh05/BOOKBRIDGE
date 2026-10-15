@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -27,7 +28,7 @@ const UserDashboardPage = () => {
         setError('');
 
         const response = await userService.getProfile();
-        const data = response.data || {};
+        const data = response?.data?.data ?? response?.data ?? {};
 
         if (!isMounted) return;
 
@@ -82,7 +83,6 @@ const UserDashboardPage = () => {
             <h2 style={{ marginTop: 0 }}>
               Welcome, {user?.name || 'Reader'}
             </h2>
-
             <p className="text-muted">
               Manage your BookBridge account, book listings, and campus
               activities from your dashboard.
@@ -121,13 +121,11 @@ const UserDashboardPage = () => {
             Books you have listed on BookBridge.
           </p>
           <h2>{loading ? '...' : listingsCount}</h2>
-
           <Link to="/dashboard/listings">
             <Button size="sm" variant="primary">
               View My Listings
             </Button>
           </Link>
-
           <div style={{ marginTop: '0.75rem' }}>
             <Link to="/books/add" className="text-terracotta text-small">
               + Add a New Book
@@ -141,7 +139,6 @@ const UserDashboardPage = () => {
             Books you are currently borrowing.
           </p>
           <h2>{loading ? '...' : borrowedCount}</h2>
-
           <Link to="/dashboard/borrowed">
             <Button size="sm" variant="ghost">
               View Borrowed Books
@@ -155,7 +152,6 @@ const UserDashboardPage = () => {
             Books currently borrowed by others.
           </p>
           <h2>{loading ? '...' : lentCount}</h2>
-
           <Link to="/dashboard/lent">
             <Button size="sm" variant="ghost">
               View Lent Books
@@ -169,23 +165,9 @@ const UserDashboardPage = () => {
             Track your borrow and exchange requests.
           </p>
           <h2>{loading ? '...' : pendingRequestsCount}</h2>
-
           <Link to="/exchange/requests">
             <Button size="sm" variant="ghost">
               View Requests
-            </Button>
-          </Link>
-        </div>
-
-        <div className="paper-card">
-          <h3>Transaction History</h3>
-          <p className="text-muted text-small">
-            View your borrowing and exchange history.
-          </p>
-
-          <Link to="/dashboard/transactions">
-            <Button size="sm" variant="ghost">
-              View History
             </Button>
           </Link>
         </div>
@@ -195,11 +177,9 @@ const UserDashboardPage = () => {
           <p className="text-muted text-small">
             Based on verified returns and trades.
           </p>
-
           <h2 style={{ color: 'var(--color-success)' }}>
             {user?.rating != null ? `${user.rating} ★` : '5.0 ★'}
           </h2>
-
           <Badge variant="success">
             Verified Campus Member
           </Badge>
@@ -226,33 +206,42 @@ const UserDashboardPage = () => {
           <Link to="/dashboard/listings">
             <Button variant="primary">My Listings</Button>
           </Link>
-
           <Link to="/books/add">
             <Button variant="outline">Add Book</Button>
           </Link>
-
           <Link to="/books">
             <Button variant="outline">Browse Books</Button>
           </Link>
         </div>
       </section>
 
+      <section
+        className="paper-card"
+        style={{ marginBottom: '2rem', padding: '1.5rem' }}
+      >
+        <h3>Transaction History</h3>
+        <p className="text-muted text-small">
+          View your borrowing and exchange history.
+        </p>
+        <Link to="/dashboard/transactions">
+          <Button size="sm" variant="ghost">
+            View History
+          </Button>
+        </Link>
+      </section>
+
       <section className="paper-card" style={{ padding: '1.5rem' }}>
         <h3>User Profile Summary</h3>
-
         <p>
           <strong>Email:</strong> {user?.email || 'N/A'}
         </p>
-
         <p>
           <strong>College:</strong> {user?.college || 'Not specified'}
         </p>
-
         <p>
           <strong>Department:</strong>{' '}
           {user?.department || 'Not specified'}
         </p>
-
         <p className="text-small text-muted" style={{ marginTop: '1rem' }}>
           Manage your listed books, browse campus books, and participate
           in BookBridge exchanges.

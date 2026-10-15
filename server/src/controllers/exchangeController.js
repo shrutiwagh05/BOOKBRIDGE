@@ -1,5 +1,6 @@
 const ExchangeRequest = require('../models/ExchangeRequest');
 const Book = require('../models/Book');
+const { createNotification } = require('../utils/notificationHelper');
 
 // @desc    Get user's incoming and outgoing exchange/borrow requests (combined)
 // @route   GET /api/exchanges
@@ -97,6 +98,14 @@ const createExchangeRequest = async (req, res, next) => {
       });
     }
 
+    // Always derive the owner from the database; never trust a client-supplied ownerId.
+    if (ownerId && ownerId.toString() !== book.owner.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'The supplied owner does not match this book listing.',
+      });
+    }
+
     // 2. Prevent requesting own book
     if (book.owner.toString() === req.user._id.toString()) {
       return res.status(400).json({
@@ -119,8 +128,29 @@ const createExchangeRequest = async (req, res, next) => {
       });
     }
 
-    // 4. Validate offered book if direct exchange
-    const requestType = type || (book.listingType === 'Exchange' ? 'exchange' : 'borrow');
+    // 4. Validate the requested action against the listing type.
+    const defaultType = book.listingType === 'Exchange'
+      ? 'exchange'
+      : book.listingType === 'Sell'
+        ? 'purchase'
+        : 'borrow';
+    const requestType = type || defaultType;
+    const allowedTypes = ['borrow', 'exchange', 'purchase'];
+
+    if (!allowedTypes.includes(requestType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request type.',
+      });
+    }
+
+    if (requestType !== defaultType) {
+      return res.status(400).json({
+        success: false,
+        message: `This listing supports a ${defaultType} request only.`,
+      });
+    }
+
     let validatedOfferedBookId = null;
 
     if (requestType === 'exchange') {
@@ -148,7 +178,7 @@ const createExchangeRequest = async (req, res, next) => {
       }
     }
 
-    const targetOwnerId = ownerId || book.owner;
+    const targetOwnerId = book.owner;
     const loanDuration = durationDays ? Number(durationDays) : (book.rentalPeriodDays || 14);
 
     const exchange = await ExchangeRequest.create({
@@ -161,6 +191,24 @@ const createExchangeRequest = async (req, res, next) => {
       message: message ? message.trim() : '',
       status: 'pending',
     });
+    await createNotification({
+      recipient: targetOwnerId,
+      sender: req.user._id,
+      title:
+        requestType === 'exchange'
+          ? 'New Exchange Request'
+          : requestType === 'purchase'
+           ? 'New Purchase Request'
+           : 'New Borrow Request',
+      message:
+        requestType === 'exchange'
+          ? 'You have received a new exchange request for your book.'
+          : requestType === 'purchase'
+           ? 'You have received a new purchase request for your book.'
+           : 'You have received a new borrow request for your book.',
+      type: 'request',
+      link: '/exchange/requests',
+});
 
     const populatedExchange = await ExchangeRequest.findById(exchange._id)
       .populate('book', 'title author images listingType price condition')
@@ -169,7 +217,15 @@ const createExchangeRequest = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: `${requestType === 'exchange' ? 'Exchange proposal' : 'Borrow request'} submitted successfully!`,
+     
+message: `${
+  requestType === 'exchange'
+    ? 'Exchange proposal'
+    : requestType === 'purchase'
+      ? 'Purchase request'
+      : 'Borrow request'
+} submitted successfully!`,
+
       data: populatedExchange,
     });
   } catch (error) {
@@ -225,9 +281,31 @@ const acceptExchangeRequest = async (req, res, next) => {
     request.status = 'accepted';
     request.returnDueDate = dueDate;
     await request.save();
+    await createNotification({
+      recipient: request.requester,
+      sender: req.user._id,
+      title: 'Request Accepted',
+     
+message:
+  request.type === 'purchase'
+    ? 'Your purchase request has been accepted.'
+    : request.type === 'exchange'
+      ? 'Your exchange request has been accepted.'
+      : 'Your borrow request has been accepted.',
+
+      type: 'request',
+      link: '/exchange/requests',
+});
 
     // Synchronize book status to borrowed or exchanged
-    book.status = request.type === 'borrow' ? 'borrowed' : 'exchanged';
+   
+book.status =
+  request.type === 'borrow'
+    ? 'borrowed'
+    : request.type === 'purchase'
+      ? 'sold'
+      : 'exchanged';
+
     await book.save();
 
     // If exchange with offered book, mark offered book status as exchanged too
@@ -236,17 +314,26 @@ const acceptExchangeRequest = async (req, res, next) => {
     }
 
     // Auto-reject any conflicting pending requests for the same book
-    await ExchangeRequest.updateMany(
-      {
-        book: book._id,
-        _id: { $ne: request._id },
-        status: 'pending',
-      },
-      {
-        status: 'rejected',
-        message: 'Book accepted by another student request.',
-      }
-    );
+    const conflictingRequests = await ExchangeRequest.find({
+      book: book._id,
+       _id: { $ne: request._id },
+      status: 'pending',
+});
+
+for (const conflictingRequest of conflictingRequests) {
+  conflictingRequest.status = 'rejected';
+  conflictingRequest.message = 'Book accepted by another student request.';
+  await conflictingRequest.save();
+
+  await createNotification({
+    recipient: conflictingRequest.requester,
+    sender: req.user._id,
+    title: 'Request Rejected',
+    message: 'Your request was rejected because the book was accepted by another student.',
+    type: 'request',
+    link: '/exchange/requests',
+  });
+}
 
     const updated = await ExchangeRequest.findById(request._id)
       .populate('book', 'title author images listingType status')
@@ -255,7 +342,13 @@ const acceptExchangeRequest = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Request accepted successfully. Book status has been updated to active loan.',
+      message: `${
+  request.type === 'purchase'
+    ? 'Purchase request accepted successfully. Book has been marked as sold.'
+    : request.type === 'exchange'
+      ? 'Exchange request accepted successfully. Book status has been updated.'
+      : 'Borrow request accepted successfully. Book status has been updated to borrowed.'
+}`,
       data: updated,
     });
   } catch (error) {
@@ -299,6 +392,21 @@ const rejectExchangeRequest = async (req, res, next) => {
         : `Rejection Note: ${req.body.reason.trim()}`;
     }
     await request.save();
+    await createNotification({
+      recipient: request.requester,
+      sender: req.user._id,
+      title: 'Request Rejected',
+      
+message:
+  request.type === 'purchase'
+    ? 'Your purchase request has been rejected.'
+    : request.type === 'exchange'
+      ? 'Your exchange request has been rejected.'
+      : 'Your borrow request has been rejected.',
+
+      type: 'request',
+      link: '/exchange/requests',
+});
 
     res.status(200).json({
       success: true,
@@ -341,6 +449,21 @@ const cancelExchangeRequest = async (req, res, next) => {
 
     request.status = 'cancelled';
     await request.save();
+    await createNotification({
+      recipient: request.owner,
+      sender: req.user._id,
+      title: 'Request Cancelled',
+      
+message:
+  request.type === 'purchase'
+    ? 'A purchase request for your book has been cancelled.'
+    : request.type === 'exchange'
+      ? 'An exchange request for your book has been cancelled.'
+      : 'A borrow request for your book has been cancelled.',
+
+      type: 'request',
+      link: '/exchange/requests',
+});
 
     res.status(200).json({
       success: true,
@@ -379,6 +502,12 @@ const returnExchangeRequest = async (req, res, next) => {
 
     // Check eligible status
     const eligibleStatuses = ['accepted', 'approved', 'active'];
+    if (request.type === 'purchase') {
+  return res.status(400).json({
+    success: false,
+    message: 'Purchased books cannot be marked as returned.',
+  });
+}
     if (!eligibleStatuses.includes(request.status)) {
       return res.status(400).json({
         success: false,
@@ -388,10 +517,26 @@ const returnExchangeRequest = async (req, res, next) => {
 
     request.status = 'returned';
     await request.save();
+    await createNotification({
+      recipient: isOwner ? request.requester : request.owner,
+      sender: req.user._id,
+      title: 'Book Returned',
+      
+message:
+  request.type === 'purchase'
+    ? 'The purchase transaction has been marked as completed.'
+    : request.type === 'exchange'
+      ? 'The exchanged book has been marked as returned successfully.'
+      : 'The borrowed book has been marked as returned successfully.',
 
-    // Restore book availability in Book collection
+      type: 'request',
+      link: '/exchange/requests',
+});
+
+    
+    // Restore book availability only for borrow and exchange transactions
     const book = await Book.findById(request.book);
-    if (book) {
+    if (book && request.type !== 'purchase') {
       book.status = 'available';
       await book.save();
     }

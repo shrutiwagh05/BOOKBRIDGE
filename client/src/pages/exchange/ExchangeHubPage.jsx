@@ -103,9 +103,10 @@ const ExchangeHubPage = () => {
       try {
         setLoading(true);
         const res = await bookService.getBooks();
-        if (res.data && res.data.length > 0) {
+        const catalog = res.data?.data ?? res.data ?? [];
+        if (catalog.length > 0) {
           // Filter to books meant for Borrow or Exchange that are currently available
-          const exchangeable = res.data.filter(
+          const exchangeable = catalog.filter(
             (b) => (b.listingType === 'Borrow' || b.listingType === 'Exchange') && b.status === 'available'
           );
           setBooks(exchangeable.length > 0 ? exchangeable : fallbackCampusBooks);
@@ -130,8 +131,9 @@ const ExchangeHubPage = () => {
         try {
           setUserBooksLoading(true);
           const res = await userService.getProfile();
-          if (res.data?.myListings) {
-            setUserBooks(res.data.myListings.filter((b) => b.status === 'available'));
+          const profileData = res.data?.data ?? res.data ?? {};
+          if (profileData.myListings) {
+            setUserBooks(profileData.myListings.filter((b) => b.status === 'available'));
           }
         } catch (err) {
           console.warn('[ExchangeHub] Could not load user listings');

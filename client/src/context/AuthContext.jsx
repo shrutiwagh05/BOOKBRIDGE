@@ -3,6 +3,14 @@ import authService from '../services/authService';
 
 const AuthContext = createContext(null);
 
+// The API client response interceptor already returns response.data.
+// Support both that shape and a raw Axios response to avoid coupling auth
+// to one response-wrapper format.
+const unwrapResponse = (response) => {
+  const payload = response?.data ?? response;
+  return payload?.data ?? payload;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('bookbridge_token') || null);
@@ -16,7 +24,7 @@ export const AuthProvider = ({ children }) => {
       if (storedToken) {
         try {
           const response = await authService.getMe();
-          setUser(response.data);
+          setUser(unwrapResponse(response));
         } catch (error) {
           console.warn('[AuthContext] Stored session invalid, clearing token');
           localStorage.removeItem('bookbridge_token');
@@ -36,7 +44,11 @@ export const AuthProvider = ({ children }) => {
     setAuthError(null);
     try {
       const response = await authService.login({ email, password });
-      const { token: receivedToken, ...userData } = response.data;
+      const { token: receivedToken, ...userData } = unwrapResponse(response);
+
+      if (!receivedToken) {
+        throw new Error('Login response did not include an authentication token.');
+      }
 
       localStorage.setItem('bookbridge_token', receivedToken);
       setToken(receivedToken);
@@ -56,7 +68,11 @@ export const AuthProvider = ({ children }) => {
     setAuthError(null);
     try {
       const response = await authService.register(userData);
-      const { token: receivedToken, ...createdUser } = response.data;
+      const { token: receivedToken, ...createdUser } = unwrapResponse(response);
+
+      if (!receivedToken) {
+        throw new Error('Registration response did not include an authentication token.');
+      }
 
       localStorage.setItem('bookbridge_token', receivedToken);
       setToken(receivedToken);

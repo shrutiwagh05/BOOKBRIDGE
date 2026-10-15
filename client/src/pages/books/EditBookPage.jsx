@@ -36,7 +36,7 @@ const EditBookPage = () => {
         setError('');
 
         const res = await bookService.getBookById(id);
-        const book = res.data;
+        const book = res.data?.data ?? res.data;
 
         setFormData({
           title: book.title || '',
@@ -465,3 +465,4 @@ const EditBookPage = () => {
 };
 
 export default EditBookPage;
+
