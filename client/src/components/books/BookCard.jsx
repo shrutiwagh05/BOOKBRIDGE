@@ -1,4 +1,3 @@
-```jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Badge from '../common/Badge';
@@ -141,4 +140,3 @@ const BookCard = ({
 };
 
 export default BookCard;
-```
