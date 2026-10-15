@@ -198,6 +198,18 @@ const deleteAdminBook = async (req, res, next) => {
       });
     }
 
+    const linkedActiveRequest = await ExchangeRequest.findOne({
+      book: book._id,
+      status: { $in: ['pending', 'accepted', 'approved', 'active'] },
+    }).select('_id');
+
+    if (linkedActiveRequest) {
+      return res.status(409).json({
+        success: false,
+        message: 'This listing has an active request or transaction and cannot be removed yet.',
+      });
+    }
+
     await Book.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
