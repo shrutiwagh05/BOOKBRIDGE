@@ -26,7 +26,7 @@ const [sendSuccess, setSendSuccess] = useState('');
       setNotifications(res.data || []);
       setUnreadCount(res.unreadCount || 0);
     } catch (err) {
-      setError('Unable to load notifications.');
+      setError(err.message || 'Unable to load notifications.');
     } finally {
       setLoading(false);
     }
@@ -40,7 +40,7 @@ const [sendSuccess, setSendSuccess] = useState('');
       const res = await adminService.getUsers();
       setUsers(res.data?.data ?? res.data ?? []);
     } catch (err) {
-      setError('Unable to load users.');
+      setError(err.message || 'Unable to load users.');
     }
   };
 
@@ -71,7 +71,7 @@ if (previousNotification && !previousNotification.isRead && updatedNotification.
 }
 
     } catch (err) {
-      setError('Unable to mark notification as read.');
+      setError(err.message || 'Unable to mark notification as read.');
     }
   };
   const handleSendNotification = async (event) => {
@@ -97,7 +97,7 @@ if (previousNotification && !previousNotification.isRead && updatedNotification.
     setSelectedUser('');
     setSendSuccess('Notification sent successfully.');
   } catch (err) {
-    setError('Unable to send notification.');
+    setError(err.message || 'Unable to send notification.');
   } finally {
     setSending(false);
   }
