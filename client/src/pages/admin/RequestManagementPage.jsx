@@ -84,7 +84,7 @@ const RequestManagementPage = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr auto',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
               gap: '0.75rem',
               alignItems: 'end',
             }}
