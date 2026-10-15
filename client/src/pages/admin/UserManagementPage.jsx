@@ -63,7 +63,7 @@ const UserManagementPage = () => {
       setUsers((currentUsers) =>
         currentUsers.map((currentUser) =>
           currentUser._id === updatedUser._id
-            ? updatedUser
+            ? { ...currentUser, ...updatedUser }
             : currentUser
         )
       );
