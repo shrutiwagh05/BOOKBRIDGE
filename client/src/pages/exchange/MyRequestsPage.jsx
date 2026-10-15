@@ -43,8 +43,8 @@ const MyRequestsPage = () => {
         exchangeService.getOutgoingRequests(),
       ]);
 
-      setIncomingRequests(incomingRes.data || []);
-      setOutgoingRequests(outgoingRes.data || []);
+      setIncomingRequests(incomingRes.data?.data ?? incomingRes.data ?? []);
+      setOutgoingRequests(outgoingRes.data?.data ?? outgoingRes.data ?? []);
     } catch (err) {
       console.warn('[MyRequests] Error fetching live requests:', err.message);
       setErrorMsg(err.message || 'Unable to retrieve requests. Please check your network.');
