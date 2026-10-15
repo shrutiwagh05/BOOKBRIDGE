@@ -11,15 +11,6 @@ const getBooks = async (req, res, next) => {
       status: 'available',
     };
 
-    if (category) {
-      filter.category = category;
-    }
-
-    if (type) {
-      filter.listingType = type;
-    }
-
-
     const filter = {
       status: 'available',
     };
