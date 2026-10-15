@@ -34,7 +34,7 @@ const BookListingPage = () => {
 
       const response = await bookService.getBooks(params);
       const serverBooks =
-        response?.data || (Array.isArray(response) ? response : []);
+        response?.data?.data ?? response?.data ?? (Array.isArray(response) ? response : []);
 
       setBooks(Array.isArray(serverBooks) ? serverBooks : []);
     } catch (err) {
