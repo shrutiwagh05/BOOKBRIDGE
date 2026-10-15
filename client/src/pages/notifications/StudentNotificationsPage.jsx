@@ -14,9 +14,8 @@ const StudentNotificationsPage = () => {
     try {
       setError('');
       const res = await adminService.getNotifications();
-      const payload = res.data || {};
-      setNotifications(payload.data ?? []);
-      setUnreadCount(payload.unreadCount ?? 0);
+      setNotifications(res.data || []);
+      setUnreadCount(res.unreadCount || 0);
     } catch (err) {
       setError(
         err.response?.data?.message ||
