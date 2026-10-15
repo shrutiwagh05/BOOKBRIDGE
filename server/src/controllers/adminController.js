@@ -4,7 +4,7 @@ const ExchangeRequest = require('../models/ExchangeRequest');
 const { createNotification } = require('../utils/notificationHelper');
 
 // Treat user-provided search terms as literal text, not regular expressions.
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\const { createNotification } = require('../utils/notificationHelper');
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 ');
 
 // @desc    Get system statistics for admin dashboard
