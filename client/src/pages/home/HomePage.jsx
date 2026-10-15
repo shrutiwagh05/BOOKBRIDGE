@@ -71,7 +71,7 @@ const HomePage = () => {
       try {
         setLoadingFeatured(true);
         const res = await bookService.getBooks({ limit: 6, sort: 'newest' });
-        setFeaturedBooks(res.data || []);
+        setFeaturedBooks(res.data?.data ?? res.data ?? []);
       } catch {
         setFeaturedError('Could not load featured books right now.');
       } finally {
@@ -87,7 +87,7 @@ const HomePage = () => {
       try {
         setLoadingRecent(true);
         const res = await bookService.getBooks({ limit: 4, sort: 'newest' });
-        setRecentBooks(res.data || []);
+        setRecentBooks(res.data?.data ?? res.data ?? []);
       } catch {
         setRecentError('Could not load recent books right now.');
       } finally {
