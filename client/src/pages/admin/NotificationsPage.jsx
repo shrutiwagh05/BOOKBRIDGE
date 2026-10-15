@@ -23,8 +23,9 @@ const [sendSuccess, setSendSuccess] = useState('');
 
       const res = await adminService.getNotifications();
 
-      setNotifications(res.data || []);
-      setUnreadCount(res.unreadCount || 0);
+      const payload = res.data || {};
+      setNotifications(payload.data ?? []);
+      setUnreadCount(payload.unreadCount ?? 0);
     } catch (err) {
       setError('Unable to load notifications.');
     } finally {
@@ -38,7 +39,7 @@ const [sendSuccess, setSendSuccess] = useState('');
   const fetchUsers = async () => {
     try {
       const res = await adminService.getUsers();
-      setUsers(res.data || []);
+      setUsers(res.data?.data ?? res.data ?? []);
     } catch (err) {
       setError('Unable to load users.');
     }
@@ -52,7 +53,7 @@ const [sendSuccess, setSendSuccess] = useState('');
       const res = await adminService.markAsRead(notificationId);
 
       
-const updatedNotification = res.data;
+const updatedNotification = res.data?.data ?? res.data;
 
 const previousNotification = notifications.find(
   (notification) => notification._id === updatedNotification._id
