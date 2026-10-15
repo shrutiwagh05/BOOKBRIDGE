@@ -5,7 +5,6 @@ const { createNotification } = require('../utils/notificationHelper');
 
 // Treat user-provided search terms as literal text, not regular expressions.
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-');
 
 // @desc    Get system statistics for admin dashboard
 // @route   GET /api/admin/stats
