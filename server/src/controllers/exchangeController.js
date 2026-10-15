@@ -294,7 +294,7 @@ message:
       : 'Your borrow request has been accepted.',
 
       type: 'request',
-      link: `/exchanges/${request._id}`,
+      link: '/exchange/requests',
 });
 
     // Synchronize book status to borrowed or exchanged
@@ -331,7 +331,7 @@ for (const conflictingRequest of conflictingRequests) {
     title: 'Request Rejected',
     message: 'Your request was rejected because the book was accepted by another student.',
     type: 'request',
-    link: `/exchanges/${conflictingRequest._id}`,
+    link: '/exchange/requests',
   });
 }
 
@@ -405,7 +405,7 @@ message:
       : 'Your borrow request has been rejected.',
 
       type: 'request',
-      link: `/exchanges/${request._id}`,
+      link: '/exchange/requests',
 });
 
     res.status(200).json({
@@ -462,7 +462,7 @@ message:
       : 'A borrow request for your book has been cancelled.',
 
       type: 'request',
-      link: `/exchanges/${request._id}`,
+      link: '/exchange/requests',
 });
 
     res.status(200).json({
@@ -530,7 +530,7 @@ message:
       : 'The borrowed book has been marked as returned successfully.',
 
       type: 'request',
-      link: `/exchanges/${request._id}`,
+      link: '/exchange/requests',
 });
 
     
