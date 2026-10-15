@@ -178,7 +178,7 @@ const createExchangeRequest = async (req, res, next) => {
            ? 'You have received a new purchase request for your book.'
            : 'You have received a new borrow request for your book.',
       type: 'request',
-      link: `/exchanges/${exchange._id}`,
+      link: '/exchange/requests',
 });
 
     const populatedExchange = await ExchangeRequest.findById(exchange._id)
