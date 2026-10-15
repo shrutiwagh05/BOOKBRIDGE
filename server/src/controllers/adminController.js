@@ -3,6 +3,10 @@ const Book = require('../models/Book');
 const ExchangeRequest = require('../models/ExchangeRequest');
 const { createNotification } = require('../utils/notificationHelper');
 
+// Treat user-provided search terms as literal text, not regular expressions.
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\const { createNotification } = require('../utils/notificationHelper');
+');
+
 // @desc    Get system statistics for admin dashboard
 // @route   GET /api/admin/stats
 // @access  Private / Admin only
@@ -20,8 +24,8 @@ const getAdminStats = async (req, res, next) => {
       Book.countDocuments(),
       Book.countDocuments({ status: 'available' }),
       ExchangeRequest.countDocuments({ status: 'pending' }),
-      ExchangeRequest.countDocuments({ status: 'active' }),
-      ExchangeRequest.countDocuments({ status: 'completed' }),
+      ExchangeRequest.countDocuments({ status: { $in: ['accepted', 'approved', 'active'] } }),
+      ExchangeRequest.countDocuments({ status: { $in: ['completed', 'returned'] } }),
     ]);
 
     res.status(200).json({
@@ -50,7 +54,7 @@ const getAdminUsers = async (req, res, next) => {
     const query = {};
 
     if (search.trim()) {
-      const searchRegex = new RegExp(search.trim(), 'i');
+      const searchRegex = new RegExp(escapeRegex(search.trim()), 'i');
 
       query.$or = [
         { name: searchRegex },
@@ -140,7 +144,7 @@ const getAdminBooks = async (req, res, next) => {
     const filter = {};
 
     if (search.trim()) {
-      const searchRegex = new RegExp(search.trim(), 'i');
+      const searchRegex = new RegExp(escapeRegex(search.trim()), 'i');
 
       filter.$or = [
         { title: searchRegex },
