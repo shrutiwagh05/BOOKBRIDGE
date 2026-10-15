@@ -29,7 +29,7 @@ const UserManagementPage = () => {
 
       const res = await adminService.getUsers(params);
 
-      setUsers(res.data || []);
+      setUsers(res.data?.data ?? res.data ?? []);
     } catch (err) {
       setError('Unable to load users.');
     } finally {
@@ -58,7 +58,7 @@ const UserManagementPage = () => {
         newStatus
       );
 
-      const updatedUser = res.data;
+      const updatedUser = res.data?.data ?? res.data;
 
       setUsers((currentUsers) =>
         currentUsers.map((currentUser) =>
