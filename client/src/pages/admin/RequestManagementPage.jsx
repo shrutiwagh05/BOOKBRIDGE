@@ -11,6 +11,7 @@ const RequestManagementPage = () => {
 
   const [status, setStatus] = useState('');
   const [type, setType] = useState('');
+  const [search, setSearch] = useState('');
 
   const fetchRequests = async () => {
     try {
@@ -21,6 +22,7 @@ const RequestManagementPage = () => {
 
       if (status) params.status = status;
       if (type) params.type = type;
+      if (search.trim()) params.search = search.trim();
 
       const response = await adminService.getRequests(params);
       setRequests(response.data?.data ?? response.data ?? []);
@@ -89,6 +91,16 @@ const RequestManagementPage = () => {
               alignItems: 'end',
             }}
           >
+            <div>
+              <label htmlFor="request-search">Search</label>
+              <input
+                id="request-search"
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Book, requester, or owner"
+              />
+            </div>
             <div>
               <label>Status</label>
 
