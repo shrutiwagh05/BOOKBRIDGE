@@ -30,8 +30,7 @@ const LoginPage = () => {
     }
 
     setIsSubmitting(true);
-    // Normalize email before authentication so casing or accidental surrounding spaces do not cause a false credential mismatch.
-    const result = await login(formData.email.trim().toLowerCase(), formData.password);
+    const result = await login(formData.email, formData.password);
     setIsSubmitting(false);
 
     if (result.success) {
