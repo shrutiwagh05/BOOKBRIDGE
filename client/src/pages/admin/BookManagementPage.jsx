@@ -61,7 +61,7 @@ const BookManagementPage = () => {
         current.filter((book) => book._id !== bookId)
       );
     } catch (err) {
-      setError('Unable to remove the book listing.');
+      setError(err.message || 'Unable to remove the book listing.');
     }
   };
 
