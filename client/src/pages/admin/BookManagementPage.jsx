@@ -130,7 +130,7 @@ const BookManagementPage = () => {
               >
                 <option value="">All Types</option>
                 <option value="Sell">Sell</option>
-                <option value="BorrowlistingType">Borrow</option>
+                <option value="Borrow">Borrow</option>
                 <option value="Exchange">Exchange</option>
               </select>
             </div>
