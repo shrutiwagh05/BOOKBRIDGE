@@ -26,7 +26,7 @@ const AdminDashboardPage = () => {
         const res = await adminService.getStats();
 
         if (res.data) {
-          setStats(res.data);
+          setStats(res.data?.data ?? res.data);
         }
       } catch (err) {
         setError('Unable to load dashboard statistics.');
