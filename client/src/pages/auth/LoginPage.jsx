@@ -30,7 +30,7 @@ const LoginPage = () => {
     }
 
     setIsSubmitting(true);
-    const result = await login(formData.email, formData.password);
+    const result = await login(formData.email.trim().toLowerCase(), formData.password);
     setIsSubmitting(false);
 
     if (result.success) {
