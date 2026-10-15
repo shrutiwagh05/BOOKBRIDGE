@@ -17,10 +17,20 @@ const BookDetailPage = () => {
   const [showRequestModal, setShowRequestModal] = useState(false);
   const handleSendRequest = async () => {
   try {
+    const listingType = String(
+      book.listingIntent || book.type || book.listingType || ''
+    ).toLowerCase();
+
+    const requestType = listingType.includes('exchange')
+      ? 'exchange'
+      : listingType.includes('borrow') || listingType.includes('lend')
+        ? 'borrow'
+        : 'purchase';
+
     const payload = {
       bookId: book._id,
       ownerId: book.owner?._id || book.owner,
-      type: book.listingType === 'exchange' ? 'exchange' : 'purchase',
+      type: requestType,
     };
 
     await exchangeService.createRequest(payload);
