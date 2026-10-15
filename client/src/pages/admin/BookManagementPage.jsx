@@ -29,7 +29,7 @@ const BookManagementPage = () => {
       if (sort) params.sort = sort;
 
       const response = await adminService.getBooks(params);
-      setBooks(response.data || []);
+      setBooks(response.data?.data ?? response.data ?? []);
     } catch (err) {
       setError('Unable to load books.');
     } finally {
