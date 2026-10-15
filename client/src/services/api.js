@@ -2,7 +2,9 @@ import axios from 'axios';
 
 // Base API instance configured with default headers and base URL
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL:
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.DEV ? '/api' : 'https://bookbridge-s1mx.onrender.com/api'),
   headers: {
     'Content-Type': 'application/json',
   },
