@@ -86,7 +86,7 @@ const BookManagementPage = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
               gap: '0.75rem',
               alignItems: 'end',
             }}
