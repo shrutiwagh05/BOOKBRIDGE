@@ -98,6 +98,14 @@ const createExchangeRequest = async (req, res, next) => {
       });
     }
 
+    // Always derive the owner from the database; never trust a client-supplied ownerId.
+    if (ownerId && ownerId.toString() !== book.owner.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'The supplied owner does not match this book listing.',
+      });
+    }
+
     // 2. Prevent requesting own book
     if (book.owner.toString() === req.user._id.toString()) {
       return res.status(400).json({
@@ -120,8 +128,29 @@ const createExchangeRequest = async (req, res, next) => {
       });
     }
 
-    // 4. Validate offered book if direct exchange
-    const requestType = type || (book.listingType === 'Exchange' ? 'exchange' : 'borrow');
+    // 4. Validate the requested action against the listing type.
+    const defaultType = book.listingType === 'Exchange'
+      ? 'exchange'
+      : book.listingType === 'Sell'
+        ? 'purchase'
+        : 'borrow';
+    const requestType = type || defaultType;
+    const allowedTypes = ['borrow', 'exchange', 'purchase'];
+
+    if (!allowedTypes.includes(requestType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid request type.',
+      });
+    }
+
+    if (requestType !== defaultType) {
+      return res.status(400).json({
+        success: false,
+        message: `This listing supports a ${defaultType} request only.`,
+      });
+    }
+
     let validatedOfferedBookId = null;
 
     if (requestType === 'exchange') {
@@ -149,7 +178,7 @@ const createExchangeRequest = async (req, res, next) => {
       }
     }
 
-    const targetOwnerId = ownerId || book.owner;
+    const targetOwnerId = book.owner;
     const loanDuration = durationDays ? Number(durationDays) : (book.rentalPeriodDays || 14);
 
     const exchange = await ExchangeRequest.create({
