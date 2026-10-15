@@ -42,7 +42,7 @@ const bookSchema = new mongoose.Schema(
     listingType: {
       type: String,
       required: [true, 'Please specify listing type'],
-      enum: ['Sell', 'BorrowlistingType', 'Exchange'],
+      enum: ['Sell', 'Borrow', 'Exchange'],
       default: 'Sell',
     },
     price: {
