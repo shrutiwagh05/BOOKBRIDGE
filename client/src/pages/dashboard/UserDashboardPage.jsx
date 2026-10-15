@@ -28,7 +28,7 @@ const UserDashboardPage = () => {
         setError('');
 
         const response = await userService.getProfile();
-        const data = response?.data || {};
+        const data = response?.data?.data ?? response?.data ?? {};
 
         if (!isMounted) return;
 
