@@ -18,7 +18,7 @@ const StudentNotificationsPage = () => {
       setUnreadCount(res.unreadCount || 0);
     } catch (err) {
       setError(
-        err.response?.data?.message ||
+        err.message ||
         'Unable to load notifications. Please try again.'
       );
     } finally {
@@ -45,7 +45,7 @@ const StudentNotificationsPage = () => {
       setUnreadCount((count) => Math.max(0, count - 1));
     } catch (err) {
       setError(
-        err.response?.data?.message ||
+        err.message ||
         'Unable to mark notification as read.'
       );
     }
