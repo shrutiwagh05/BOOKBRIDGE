@@ -70,7 +70,19 @@ const requestPasswordReset = async (req, res, next) => {
       return res.status(503).json({ success: false, message: 'Password reset email is temporarily unavailable. Please try again later.' });
     }
     if (!response.ok) {
-      console.error('[PasswordReset] Email provider returned status:', response.status);
+      let providerError = '';
+      try {
+        const payload = await response.json();
+        providerError = payload && payload.message ? String(payload.message).slice(0, 300) : '';
+      } catch (_) {
+        providerError = '';
+      }
+      // Log provider diagnostics, never the API key or reset token.
+      console.error('[PasswordReset] Email provider rejected the message:', {
+        status: response.status,
+        name: 'ResendAPIError',
+        message: providerError || 'No error details returned',
+      });
       user.passwordResetToken = undefined; user.passwordResetExpires = undefined;
       await user.save({ validateBeforeSave: false });
       return res.status(503).json({ success: false, message: 'Password reset email is temporarily unavailable. Please try again later.' });
