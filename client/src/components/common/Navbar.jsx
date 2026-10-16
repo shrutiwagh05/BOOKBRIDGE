@@ -5,6 +5,18 @@ import Button from './Button';
 import Badge from './Badge';
 import './Navbar.css';
 
+const Navbar = () => {
+  const { user, isAuthenticated, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    setMobileMenuOpen(false);
+    navigate('/');
+  };
+
+  const closeMenu = () => setMobileMenuOpen(false);
   const navLinkClass = ({ isActive }) =>
     `bb-nav-link ${isActive ? 'active' : ''}`;
 
@@ -39,67 +51,37 @@ import './Navbar.css';
         >
           <ul className="bb-nav-links">
             <li>
-              <NavLink
-                to="/"
-                end
-                className={navLinkClass}
-                onClick={closeMenu}
-              >
+              <NavLink to="/" end className={navLinkClass} onClick={closeMenu}>
                 Home
               </NavLink>
             </li>
-
             <li>
-              <NavLink
-                to="/books"
-                className={navLinkClass}
-                onClick={closeMenu}
-              >
+              <NavLink to="/books" className={navLinkClass} onClick={closeMenu}>
                 Browse Books
               </NavLink>
             </li>
-
             <li>
-              <NavLink
-                to="/exchange"
-                className={navLinkClass}
-                onClick={closeMenu}
-              >
+              <NavLink to="/exchange" className={navLinkClass} onClick={closeMenu}>
                 Borrow &amp; Exchange
               </NavLink>
             </li>
-
             {isAuthenticated && (
               <li>
-                <NavLink
-                  to="/dashboard"
-                  className={navLinkClass}
-                  onClick={closeMenu}
-                >
+                <NavLink to="/dashboard" className={navLinkClass} onClick={closeMenu}>
                   Dashboard
                 </NavLink>
               </li>
             )}
-
             {isAuthenticated && (
               <li>
-                <NavLink
-                  to="/profile"
-                  className={navLinkClass}
-                  onClick={closeMenu}
-                >
+                <NavLink to="/profile" className={navLinkClass} onClick={closeMenu}>
                   Profile
                 </NavLink>
               </li>
             )}
-
             {isAuthenticated && user?.role === 'admin' && (
               <li>
-                <NavLink
-                  to="/admin"
-                  className={navLinkClass}
-                  onClick={closeMenu}
-                >
+                <NavLink to="/admin" className={navLinkClass} onClick={closeMenu}>
                   Admin
                 </NavLink>
               </li>
@@ -116,9 +98,7 @@ import './Navbar.css';
                 </Link>
 
                 <div className="bb-user-info">
-                  <span className="bb-user-name">
-                    {user?.name || 'Student'}
-                  </span>
+                  <span className="bb-user-name">{user?.name || 'Student'}</span>
                   {user?.role === 'admin' && (
                     <Badge variant="terracotta" size="sm">
                       Admin
@@ -126,11 +106,7 @@ import './Navbar.css';
                   )}
                 </div>
 
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleLogout}
-                >
+                <Button size="sm" variant="outline" onClick={handleLogout}>
                   Logout
                 </Button>
               </div>
@@ -141,7 +117,6 @@ import './Navbar.css';
                     Sign In
                   </Button>
                 </Link>
-
                 <Link to="/register" onClick={closeMenu}>
                   <Button size="sm" variant="primary">
                     Join Library
