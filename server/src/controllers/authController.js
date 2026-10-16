@@ -3,7 +3,7 @@ const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 
 const normalizeEmail = (email) => typeof email === 'string' ? email.trim().toLowerCase() : '';
-const escapeRegex = (value) => value.replace(/[.*+?^$()|[\]\\{}]/g, '\\$&');
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
 const findUserByEmail = (email) => User.findOne({
   email: { $regex: '^' + escapeRegex(email) + '$', $options: 'i' },
 });
