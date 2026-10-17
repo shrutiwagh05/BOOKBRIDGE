@@ -166,6 +166,16 @@ const AppRoutes = () => {
           }
         />
 
+        {/* Keep the shorter notifications URL working for navigation links/bookmarks. */}
+        <Route
+          path="notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Auth Routes */}
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
