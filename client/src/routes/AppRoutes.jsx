@@ -33,6 +33,8 @@ import NotificationsPage from '../pages/admin/NotificationsPage';
 // Auth Pages
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
+import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 
 // 404
 import NotFoundPage from '../pages/NotFoundPage';
@@ -164,9 +166,21 @@ const AppRoutes = () => {
           }
         />
 
+        {/* Keep the shorter notifications URL working for navigation links/bookmarks. */}
+        <Route
+          path="notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Auth Routes */}
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
 
         {/* 404 Catch-All */}
         <Route path="*" element={<NotFoundPage />} />
