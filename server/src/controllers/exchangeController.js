@@ -155,7 +155,6 @@ const createExchangeRequest = async (req, res, next) => {
 
     // Never trust ownerId supplied by the browser; use the actual listing owner.
     const targetOwnerId = book.owner;
-    const loanDuration = parsedDuration;
 
     const exchange = await ExchangeRequest.create({
       book: bookId,
