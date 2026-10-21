@@ -22,6 +22,7 @@ const ExchangeHubPage = () => {
   const [books, setBooks] = useState([]);
   const [userBooks, setUserBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState('');
   const [userBooksLoading, setUserBooksLoading] = useState(false);
 
   // Filter states
@@ -46,6 +47,7 @@ const ExchangeHubPage = () => {
     const fetchCatalog = async () => {
       try {
         setLoading(true);
+        setCatalogError('');
         const res = await bookService.getBooks();
         const liveBooks = Array.isArray(res.data) ? res.data : [];
         // Only show real, available Borrow/Exchange listings returned by the API.
@@ -54,7 +56,7 @@ const ExchangeHubPage = () => {
         ));
       } catch (err) {
         setBooks([]);
-        setModalError(err.message || 'Could not load available books. Please try again.');
+        setCatalogError(err.message || 'Could not load available books. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -305,6 +307,8 @@ const ExchangeHubPage = () => {
 
         {loading ? (
           <Loader text="Gathering peer circulating archives..." />
+        ) : catalogError ? (
+          <ErrorAlert message={catalogError} onClose={() => setCatalogError('')} />
         ) : filteredBooks.length === 0 ? (
           <EmptyState
             icon="📚"
