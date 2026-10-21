@@ -9,16 +9,15 @@ import bookService from '../../services/bookService';
 import { useAuth } from '../../context/AuthContext';
 import './HomePages.css';
 
-/* ─── Static Data ─────────────────────────────────────────────── */
 const CATEGORIES = [
-  { label: 'Computer Science & IT',  icon: '💻', slug: 'Computer Science & IT' },
-  { label: 'Engineering',             icon: '⚙️',  slug: 'Engineering' },
-  { label: 'Business & Economics',    icon: '📊', slug: 'Business & Economics' },
-  { label: 'Medical & Science',       icon: '🔬', slug: 'Medical & Science' },
-  { label: 'Literature & Fiction',    icon: '📖', slug: 'Literature & Fiction' },
-  { label: 'Humanities & Arts',       icon: '🎨', slug: 'Humanities & Arts' },
-  { label: 'Competitive Exams',       icon: '🏆', slug: 'Competitive Exams' },
-  { label: 'Other',                   icon: '📚', slug: 'Other' },
+  { label: 'Computer Science & IT', icon: '💻', slug: 'Computer Science & IT' },
+  { label: 'Engineering', icon: '⚙️', slug: 'Engineering' },
+  { label: 'Business & Economics', icon: '📊', slug: 'Business & Economics' },
+  { label: 'Medical & Science', icon: '🔬', slug: 'Medical & Science' },
+  { label: 'Literature & Fiction', icon: '📖', slug: 'Literature & Fiction' },
+  { label: 'Humanities & Arts', icon: '🎨', slug: 'Humanities & Arts' },
+  { label: 'Competitive Exams', icon: '🏆', slug: 'Competitive Exams' },
+  { label: 'Other', icon: '📚', slug: 'Other' },
 ];
 
 const HOW_IT_WORKS = [
@@ -26,7 +25,7 @@ const HOW_IT_WORKS = [
     step: '01',
     icon: '📋',
     title: 'List Your Book',
-    desc: 'Add your pre-loved textbook in 2 minutes — set it as Sell, Borrow, or Exchange.',
+    desc: 'Add your textbook and set it as Sell, Borrow, or Exchange.',
   },
   {
     step: '02',
@@ -38,30 +37,29 @@ const HOW_IT_WORKS = [
     step: '03',
     icon: '🤝',
     title: 'Connect & Trade',
-    desc: 'Send a borrow request or exchange proposal directly to your fellow student.',
+    desc: 'Send a borrow request or exchange proposal to another student.',
   },
   {
     step: '04',
     icon: '♻️',
     title: 'Keep Books Alive',
-    desc: 'Every exchange reduces waste. Build a campus reading culture together.',
+    desc: 'Every exchange reduces waste and supports a campus reading culture.',
   },
 ];
 
 /* ─── Component ───────────────────────────────────────────────── */
 const HomePage = () => {
-  const navigate   = useNavigate();
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  const [heroSearch,     setHeroSearch]     = useState('');
-  const [featuredBooks,  setFeaturedBooks]  = useState([]);
-  const [recentBooks,    setRecentBooks]    = useState([]);
+  const [heroSearch, setHeroSearch] = useState('');
+  const [featuredBooks, setFeaturedBooks] = useState([]);
+  const [recentBooks, setRecentBooks] = useState([]);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
-  const [loadingRecent,   setLoadingRecent]   = useState(true);
-  const [featuredError,  setFeaturedError]  = useState('');
-  const [recentError,    setRecentError]    = useState('');
+  const [loadingRecent, setLoadingRecent] = useState(true);
+  const [featuredError, setFeaturedError] = useState('');
+  const [recentError, setRecentError] = useState('');
 
-  /* Fetch featured books (Borrow + Exchange, limit 6) */
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
@@ -74,10 +72,10 @@ const HomePage = () => {
         setLoadingFeatured(false);
       }
     };
+
     fetchFeatured();
   }, []);
 
-  /* Fetch recently added (newest 4, any type) */
   useEffect(() => {
     const fetchRecent = async () => {
       try {
@@ -90,12 +88,13 @@ const HomePage = () => {
         setLoadingRecent(false);
       }
     };
+
     fetchRecent();
   }, []);
 
-  /* Hero search submit */
   const handleHeroSearch = (e) => {
     e.preventDefault();
+
     if (heroSearch.trim()) {
       navigate(`/discover?search=${encodeURIComponent(heroSearch.trim())}`);
     } else {
@@ -105,25 +104,30 @@ const HomePage = () => {
 
   return (
     <div className="bb-home-page">
-
-      {/* ── HERO ──────────────────────────────────────────────── */}
+      {/* HERO */}
       <section className="bb-hero-section">
         <div className="bb-hero-inner container">
           <div className="bb-hero-text">
             <Badge variant="terracotta">Campus Book Marketplace</Badge>
+
             <h1 className="bb-hero-title">
               Where College Books Find{' '}
               <span className="bb-highlight">Their Next Reader</span>
             </h1>
+
             <p className="bb-hero-lead lead">
               Buy, sell, borrow, lend and exchange pre-loved textbooks with
               students across your campus. No middlemen — just knowledge
               flowing freely.
             </p>
+
             <div className="bb-hero-actions">
               <Link to="/discover">
-                <Button size="lg" variant="primary">Explore Library Catalog</Button>
+                <Button size="lg" variant="primary">
+                  Explore Library Catalog
+                </Button>
               </Link>
+
               <Link to="/books/add">
                 <Button size="lg" variant="outline">
                   {isAuthenticated ? 'List a Book' : 'Offer a Book'}
@@ -132,10 +136,10 @@ const HomePage = () => {
             </div>
           </div>
 
-          {/* Hero Search Bar */}
           <form className="bb-hero-search-form" onSubmit={handleHeroSearch}>
             <div className="bb-hero-search-box">
               <span className="bb-hero-search-icon">🔍</span>
+
               <input
                 type="text"
                 className="bb-hero-search-input"
@@ -144,13 +148,20 @@ const HomePage = () => {
                 onChange={(e) => setHeroSearch(e.target.value)}
                 aria-label="Search books"
               />
+
               <button type="submit" className="bb-hero-search-btn">
                 Search
               </button>
             </div>
+
             <div className="bb-hero-search-hints">
               <span>Popular:</span>
-              {['CLRS Algorithms', 'Engineering Physics', 'Mankiw Economics'].map((t) => (
+
+              {[
+                'CLRS Algorithms',
+                'Engineering Physics',
+                'Mankiw Economics',
+              ].map((t) => (
                 <button
                   key={t}
                   type="button"
@@ -167,10 +178,15 @@ const HomePage = () => {
           </form>
         </div>
 
-        {/* Decorative shelf rule */}
         <div className="bb-hero-shelf-rule" aria-hidden="true">
-          <span>📖</span><span>📕</span><span>📗</span><span>📘</span>
-          <span>📙</span><span>📚</span><span>📖</span><span>📕</span>
+          <span>📖</span>
+          <span>📕</span>
+          <span>📗</span>
+          <span>📘</span>
+          <span>📙</span>
+          <span>📚</span>
+          <span>📖</span>
+          <span>📕</span>
         </div>
       </section>
 
@@ -181,16 +197,21 @@ const HomePage = () => {
             <h6>From the Shelves</h6>
             <h2>Featured Volumes</h2>
             <p className="text-muted">
-              Hand-picked listings available on campus right now.
+              Recently listed books available on campus.
             </p>
           </div>
+
           <Link to="/discover">
             <Button variant="ghost">Browse All →</Button>
           </Link>
         </div>
 
         {featuredError && (
-          <ErrorAlert type="warning" message={featuredError} onClose={() => setFeaturedError('')} />
+          <ErrorAlert
+            type="warning"
+            message={featuredError}
+            onClose={() => setFeaturedError('')}
+          />
         )}
 
         {loadingFeatured ? (
@@ -200,28 +221,38 @@ const HomePage = () => {
             <span className="bb-empty-shelf-icon">📭</span>
             <p className="text-muted">
               No books listed yet.{' '}
-              <Link to="/books/add" className="text-terracotta">Be the first to list one!</Link>
+              <Link to="/books/add" className="text-terracotta">
+                Be the first to list one!
+              </Link>
             </p>
           </div>
         ) : (
           <div className="grid-3">
             {featuredBooks.map((book) => (
-              <BookCard key={book._id} book={book} actionLabel="View Details" />
+              <BookCard
+                key={book._id}
+                book={book}
+                actionLabel="View Details"
+              />
             ))}
           </div>
         )}
       </section>
 
-      {/* ── POPULAR CATEGORIES ────────────────────────────────── */}
+      {/* POPULAR CATEGORIES */}
       <section className="bb-section bb-categories-section">
         <div className="container">
-          <div className="bb-section-header" style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div
+            className="bb-section-header"
+            style={{ textAlign: 'center', marginBottom: '2rem' }}
+          >
             <h6>Browse by Subject</h6>
             <h2>Popular Categories</h2>
             <p className="text-muted">
               Dive straight into the discipline you need.
             </p>
           </div>
+
           <div className="bb-categories-grid">
             {CATEGORIES.map((cat) => (
               <Link
@@ -237,23 +268,28 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* ── RECENTLY ADDED ────────────────────────────────────── */}
+      {/* RECENTLY ADDED */}
       <section className="bb-section container">
         <div className="bb-section-header flex-between">
           <div>
             <h6>Fresh Arrivals</h6>
             <h2>Recently Added</h2>
             <p className="text-muted">
-              Books listed by students in the past few days.
+              Books listed by students recently.
             </p>
           </div>
+
           <Link to="/discover?sort=newest">
             <Button variant="ghost">See All New →</Button>
           </Link>
         </div>
 
         {recentError && (
-          <ErrorAlert type="warning" message={recentError} onClose={() => setRecentError('')} />
+          <ErrorAlert
+            type="warning"
+            message={recentError}
+            onClose={() => setRecentError('')}
+          />
         )}
 
         {loadingRecent ? (
@@ -263,28 +299,38 @@ const HomePage = () => {
             <span className="bb-empty-shelf-icon">🕊️</span>
             <p className="text-muted">
               No recent listings.{' '}
-              <Link to="/books/add" className="text-terracotta">Add yours now!</Link>
+              <Link to="/books/add" className="text-terracotta">
+                Add yours now!
+              </Link>
             </p>
           </div>
         ) : (
           <div className="grid-4">
             {recentBooks.map((book) => (
-              <BookCard key={book._id} book={book} actionLabel="View Details" />
+              <BookCard
+                key={book._id}
+                book={book}
+                actionLabel="View Details"
+              />
             ))}
           </div>
         )}
       </section>
 
-      {/* ── HOW IT WORKS ──────────────────────────────────────── */}
+      {/* HOW IT WORKS */}
       <section className="bb-section bb-how-section">
         <div className="container">
-          <div className="bb-section-header" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div
+            className="bb-section-header"
+            style={{ textAlign: 'center', marginBottom: '2.5rem' }}
+          >
             <h6>The Process</h6>
             <h2>How BookBridge Works</h2>
             <p className="text-muted">
               Four simple steps to keep campus knowledge in motion.
             </p>
           </div>
+
           <div className="bb-how-grid">
             {HOW_IT_WORKS.map((step, idx) => (
               <div key={step.step} className="bb-how-card paper-card">
@@ -292,8 +338,11 @@ const HomePage = () => {
                 <div className="bb-how-icon">{step.icon}</div>
                 <h4 className="bb-how-title">{step.title}</h4>
                 <p className="text-small text-muted">{step.desc}</p>
+
                 {idx < HOW_IT_WORKS.length - 1 && (
-                  <span className="bb-how-connector" aria-hidden="true">→</span>
+                  <span className="bb-how-connector" aria-hidden="true">
+                    →
+                  </span>
                 )}
               </div>
             ))}
@@ -301,108 +350,140 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* ── BORROW / LEND / EXCHANGE INTRO ────────────────────── */}
+      {/* BORROW / LEND / EXCHANGE */}
       <section className="bb-section container">
         <div className="bb-exchange-intro paper-card">
           <div className="bb-exchange-intro-content">
             <Badge variant="terracotta">Zero Cost Transactions</Badge>
+
             <h2 style={{ marginTop: '0.75rem' }}>
-              Borrow, Lend & Exchange — <span className="bb-highlight">Free</span>
+              Borrow, Lend & Exchange —{' '}
+              <span className="bb-highlight">Free</span>
             </h2>
+
             <p className="lead">
-              Not every student can afford every textbook. BookBridge's peer
-              lending system lets you borrow books for exam season and return
-              them after. Propose a direct exchange — trade your finished
-              semester's books for next semester's ones.
+              BookBridge helps students share learning resources affordably.
+              Borrow books for exam season, lend books to other students, or
+              propose an exchange for your next semester.
             </p>
+
             <div className="bb-exchange-intro-features">
               <div className="bb-exchange-feature">
                 <span>🤝</span>
                 <div>
                   <strong>Borrow</strong>
-                  <p className="text-small text-muted">Request any book for up to 30 days.</p>
+                  <p className="text-small text-muted">
+                    Request a book from another student.
+                  </p>
                 </div>
               </div>
+
               <div className="bb-exchange-feature">
                 <span>📦</span>
                 <div>
                   <strong>Lend</strong>
-                  <p className="text-small text-muted">List your idle books for juniors to use.</p>
+                  <p className="text-small text-muted">
+                    List books for other students to use.
+                  </p>
                 </div>
               </div>
+
               <div className="bb-exchange-feature">
                 <span>🔄</span>
                 <div>
                   <strong>Exchange</strong>
-                  <p className="text-small text-muted">Trade book-for-book with a classmate.</p>
+                  <p className="text-small text-muted">
+                    Trade books with another student.
+                  </p>
                 </div>
               </div>
             </div>
+
             <div className="bb-exchange-intro-actions">
               <Link to="/exchange">
                 <Button variant="primary">Explore Exchange Hub</Button>
               </Link>
+
               <Link to="/books/add">
                 <Button variant="outline">Lend a Book to Campus</Button>
               </Link>
             </div>
           </div>
+
           <div className="bb-exchange-intro-visual" aria-hidden="true">
             <div className="bb-exchange-book-stack">
-              <span>📗</span><span>📘</span><span>📕</span>
+              <span>📗</span>
+              <span>📘</span>
+              <span>📕</span>
             </div>
+
             <div className="bb-exchange-arrows">⇄</div>
+
             <div className="bb-exchange-book-stack">
-              <span>📙</span><span>📖</span><span>📚</span>
+              <span>📙</span>
+              <span>📖</span>
+              <span>📚</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── SUSTAINABILITY ────────────────────────────────────── */}
+      {/* SUSTAINABILITY */}
       <section className="bb-section bb-sustainability-section">
         <div className="container">
           <div className="bb-sustainability-inner">
             <div className="bb-sustainability-text">
               <h6>Why It Matters</h6>
               <h2>Every Reused Book is a Win for the Planet</h2>
+
               <p className="lead">
-                Printing a single textbook uses approximately 8–10 kg of CO₂.
-                When students share and reuse books, the environmental and
-                financial savings multiply across every semester.
+                Sharing and reusing books can reduce waste and help students
+                save money on learning resources.
               </p>
+
               <ul className="bb-sustainability-list">
                 <li>♻️ Reduce academic paper waste on campus</li>
-                <li>💸 Save up to ₹5,000+ per semester on textbooks</li>
+                <li>💸 Save money by reusing textbooks</li>
                 <li>🌱 Build a culture of sustainable learning</li>
-                <li>🤝 Support fellow students who need affordable access</li>
+                <li>🤝 Support students who need affordable access</li>
               </ul>
+
               <Link to="/discover">
                 <Button variant="primary">Start Exploring</Button>
               </Link>
             </div>
+
             <div className="bb-sustainability-visual">
               <div className="bb-eco-badge">
                 <span className="bb-eco-icon">🌿</span>
-                <p className="bb-eco-label">Campus<br />Eco Library</p>
+                <p className="bb-eco-label">
+                  Campus
+                  <br />
+                  Eco Library
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── FINAL CTA ─────────────────────────────────────────── */}
+      {/* FINAL CALL TO ACTION */}
       <section className="bb-section bb-cta-section">
         <div className="container">
           <div className="bb-cta-card">
             <h2>Ready to Join the BookBridge Library?</h2>
+
             <p className="lead">
-              Thousands of textbooks. Zero middlemen. One student community.
+              Discover books, connect with students, and share knowledge.
             </p>
+
             <div className="bb-cta-actions">
               <Link to="/discover">
-                <Button size="lg" variant="primary">Browse All Books</Button>
+                <Button size="lg" variant="primary">
+                  Browse All Books
+                </Button>
               </Link>
+
               <Link to={isAuthenticated ? '/books/add' : '/register'}>
                 <Button size="lg" variant="outline">
                   {isAuthenticated ? 'List a Book' : 'Join BookBridge Free'}
@@ -412,7 +493,6 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-
     </div>
   );
 };

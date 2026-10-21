@@ -9,6 +9,7 @@ import './BookCard.css';
  * @param {Object} book - Book data object
  * @param {string} book.title - Title of the book
  * @param {string} book.author - Author name
+ * @param {string} book.isbn - ISBN of the book
  * @param {string} book.listingType - 'Sell' | 'Borrow' | 'Exchange'
  * @param {number} book.price - Selling or deposit price
  * @param {string} book.condition - 'New' | 'Like New' | 'Good' | 'Fair'
@@ -32,6 +33,7 @@ const BookCard = ({
     _id,
     title = 'Untitled Book',
     author = 'Unknown Author',
+    isbn = '',
     listingType = 'Sell',
     price = 0,
     condition = 'Good',
@@ -63,23 +65,45 @@ const BookCard = ({
             <span className="bb-book-spine-line"></span>
             <div className="bb-book-placeholder-inner">
               <span className="bb-book-placeholder-icon">📖</span>
-              <span className="bb-book-placeholder-title">{title}</span>
+              <span className="bb-book-placeholder-title">
+                {title}
+              </span>
             </div>
           </div>
         )}
+
         <div className="bb-book-card-badges">
-          <Badge variant={listingType}>{listingType}</Badge>
-          <Badge variant={condition}>{condition}</Badge>
+          <Badge variant={listingType}>
+            {listingType}
+          </Badge>
+
+          <Badge variant={condition}>
+            {condition}
+          </Badge>
         </div>
       </div>
 
       {/* Book Information */}
       <div className="bb-book-card-body">
-        <span className="bb-book-category">{category}</span>
+        <span className="bb-book-category">
+          {category}
+        </span>
+
         <h3 className="bb-book-title" title={title}>
-          <Link to={bookId ? `/books/${bookId}` : '#'}>{title}</Link>
+          <Link to={bookId ? `/books/${bookId}` : '#'}>
+            {title}
+          </Link>
         </h3>
-        <p className="bb-book-author">by {author}</p>
+
+        <p className="bb-book-author">
+          by {author}
+        </p>
+
+        {isbn && (
+          <p className="bb-book-isbn">
+            <strong>ISBN:</strong> {isbn}
+          </p>
+        )}
 
         {locationCollege && (
           <p className="bb-book-location">
@@ -91,11 +115,17 @@ const BookCard = ({
         <div className="bb-book-card-footer">
           <div className="bb-book-price-block">
             {listingType === 'Sell' ? (
-              <span className="bb-book-price">₹{price}</span>
+              <span className="bb-book-price">
+                ₹{price}
+              </span>
             ) : listingType === 'Borrow' ? (
-              <span className="bb-book-borrow-note">Lend / Borrow</span>
+              <span className="bb-book-borrow-note">
+                Lend / Borrow
+              </span>
             ) : (
-              <span className="bb-book-exchange-note">Exchange Offer</span>
+              <span className="bb-book-exchange-note">
+                Exchange Offer
+              </span>
             )}
           </div>
 

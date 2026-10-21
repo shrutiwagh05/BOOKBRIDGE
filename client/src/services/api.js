@@ -13,9 +13,11 @@ const resolveBaseUrl = () => {
   return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
 };
 
-// Base API instance configured with default headers and base URL
+// Base API instance configured with default headers and base URL.
+// A timeout prevents auth forms from spinning forever if the API is asleep or unreachable.
 const api = axios.create({
   baseURL: resolveBaseUrl(),
+  timeout: 20000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -46,7 +48,11 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     let message = error.response?.data?.message;
-    if (!message) {
+    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+      message = 'The server is taking too long to respond. Please try again in a moment.';
+    } else if (!error.response && error.request) {
+      message = 'Could not reach the BookBridge server. Please check your connection and try again.';
+    } else if (!message) {
       if (error.response?.status === 404) {
         message = 'The requested resource or API endpoint was not found (404). Please check the backend URL configuration.';
       } else if (error.response?.status === 500) {

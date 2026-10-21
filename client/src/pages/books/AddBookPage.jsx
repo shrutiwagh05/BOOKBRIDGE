@@ -12,6 +12,7 @@ const AddBookPage = () => {
   const [formData, setFormData] = useState({
     title: '',
     author: '',
+    isbn: '',
     category: 'Computer Science & IT',
     listingType: 'Sell',
     price: '',
@@ -23,6 +24,8 @@ const AddBookPage = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,6 +36,23 @@ const AddBookPage = () => {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setErrorMsg('Choose a JPG, PNG, or WEBP image.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('Image must be 5 MB or smaller.');
+      e.target.value = '';
+      return;
+    }
+    setErrorMsg('');
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -45,20 +65,19 @@ const AddBookPage = () => {
       setLoading(true);
       setErrorMsg('');
 
-      const payload = {
+      const payload = new FormData();
+      Object.entries({
         title: formData.title.trim(),
         author: formData.author.trim(),
+        isbn: formData.isbn.trim(),
         category: formData.category,
         listingType: formData.listingType,
-        price: Number(formData.price) || 0,
+        price: String(Number(formData.price) || 0),
         condition: formData.condition,
         description: formData.description.trim(),
-
-        // Explicitly send the campus/hostel location
         locationCollege: formData.locationCollege.trim(),
-      };
-
-      console.log('BookBridge listing payload:', payload);
+      }).forEach(([key, value]) => payload.append(key, value));
+      if (imageFile) payload.append('image', imageFile);
 
       await bookService.createBook(payload);
 
@@ -120,6 +139,21 @@ const AddBookPage = () => {
         )}
 
         <form onSubmit={handleSubmit}>
+          <div style={{ margin: '1rem 0' }}>
+            <label htmlFor="book-image" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>
+              Book Photo (JPG, PNG, WEBP — max 5 MB)
+            </label>
+            <input id="book-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageChange} />
+            {imagePreview && (
+              <div style={{ marginTop: '0.75rem' }}>
+                <img src={imagePreview} alt="Book preview" style={{ width: '150px', height: '180px', objectFit: 'contain', borderRadius: '8px' }} />
+                <button type="button" onClick={() => { setImageFile(null); setImagePreview(''); document.getElementById('book-image').value = ''; }} style={{ display: 'block', marginTop: '0.5rem' }}>
+                  Remove photo
+                </button>
+              </div>
+            )}
+          </div>
+
           <Input
             label="Book Title"
             name="title"
@@ -127,6 +161,14 @@ const AddBookPage = () => {
             onChange={handleChange}
             placeholder="e.g. Design Patterns: Elements of Reusable Object-Oriented Software"
             required
+          />
+
+          <Input
+            label="ISBN"
+            name="isbn"
+            value={formData.isbn}
+            onChange={handleChange}
+            placeholder="e.g. 9780262046305"
           />
 
           <div className="grid-2">
@@ -168,7 +210,10 @@ const AddBookPage = () => {
               options={[
                 { value: 'Sell', label: 'Sell (Set price)' },
                 { value: 'Borrow', label: 'Lend / Borrow' },
-                { value: 'Exchange', label: 'Exchange for another book' },
+                {
+                  value: 'Exchange',
+                  label: 'Exchange for another book',
+                },
               ]}
             />
 

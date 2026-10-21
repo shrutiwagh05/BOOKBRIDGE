@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
@@ -47,6 +48,7 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
 // Health Check Routes
 const healthResponse = (req, res) => {

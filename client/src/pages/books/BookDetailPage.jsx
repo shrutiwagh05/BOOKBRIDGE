@@ -11,78 +11,6 @@ import exchangeService from '../../services/exchangeService';
 import userService from '../../services/userService';
 import { useAuth } from '../../context/AuthContext';
 
-// Fallback demo books registry to ensure sample preview links also display gracefully
-const fallbackDemoBooks = [
-  {
-    _id: 'bk-101',
-    title: 'Operating System Concepts (10th Ed)',
-    author: 'Abraham Silberschatz, Peter Baer Galvin',
-    category: 'Computer Science & IT',
-    listingType: 'Sell',
-    price: 350,
-    condition: 'Good',
-    locationCollege: 'Department of Computing',
-    description: 'Comprehensive dinosaur OS book. Covers virtualization, deadlocks, and kernel memory.',
-  },
-  {
-    _id: 'bk-102',
-    title: 'Database System Concepts',
-    author: 'Henry F. Korth',
-    category: 'Computer Science & IT',
-    listingType: 'Borrow',
-    price: 0,
-    rentalPeriodDays: 14,
-    condition: 'Like New',
-    locationCollege: 'Library Stacks 3',
-    description: 'Classic database text covering relational calculus, normalization, transactions, and indexing.',
-  },
-  {
-    _id: 'bk-103',
-    title: 'Macroeconomics: Theory & Policy',
-    author: 'N. Gregory Mankiw',
-    category: 'Business & Economics',
-    listingType: 'Exchange',
-    price: 0,
-    condition: 'Fair',
-    locationCollege: 'Commerce Wing',
-    description: 'Macroeconomics principles with handwritten marginal notes. Looking to trade for Microeconomics.',
-  },
-  {
-    _id: 'sample-1',
-    title: 'Introduction to Algorithms (CLRS)',
-    author: 'Thomas H. Cormen, Charles E. Leiserson',
-    category: 'Computer Science & IT',
-    listingType: 'Borrow',
-    price: 0,
-    rentalPeriodDays: 21,
-    condition: 'Like New',
-    locationCollege: 'Main Campus Library Desk',
-    description: 'MIT Press Algorithms reference book. Essential for Data Structures & Algorithms.',
-  },
-  {
-    _id: 'sample-2',
-    title: 'Principles of Neural Science',
-    author: 'Eric Kandel',
-    category: 'Medical & Science',
-    listingType: 'Sell',
-    price: 450,
-    condition: 'Good',
-    locationCollege: 'Medical Sciences Block',
-    description: 'Foundational neuroscience textbook in solid condition. Minor highlighting in early chapters.',
-  },
-  {
-    _id: 'sample-3',
-    title: 'Clean Code: A Handbook of Agile Software',
-    author: 'Robert C. Martin',
-    category: 'Computer Science & IT',
-    listingType: 'Exchange',
-    price: 0,
-    condition: 'New',
-    locationCollege: 'Department of Computing',
-    description: 'Clean Code handbook. Open to exchanging for Clean Architecture or Refactoring.',
-  },
-];
-
 const BookDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -123,25 +51,17 @@ const BookDetailPage = () => {
           if (resolvedBook && resolvedBook.title) {
             setBook(resolvedBook);
           } else {
-            // Check fallback demo books if not found in DB
-            const fallback = fallbackDemoBooks.find((b) => b._id === id);
-            if (fallback) {
-              setBook(fallback);
-            } else {
-              setError('Book listing not found.');
-            }
+            setError('Book listing not found.');
           }
         }
       } catch (err) {
         console.warn(`[BookDetailPage] Could not load book id ${id} from API:`, err.message);
-        // Check fallback demo list
-        const fallback = fallbackDemoBooks.find((b) => b._id === id);
         if (isMounted) {
-          if (fallback) {
-            setBook(fallback);
-          } else {
-            setError(err.message || 'Unable to load this book. Please try again.');
-          }
+          setError(
+            err.response?.data?.message ||
+            err.message ||
+            'Unable to load this book. Please try again.'
+          );
         }
       } finally {
         if (isMounted) {
@@ -273,17 +193,44 @@ const BookDetailPage = () => {
     ? book.authors.join(', ')
     : book.author || 'Unknown Author';
 
-  const listingType = book.listingType || book.type || 'Sell';
+  const isbn = book.isbn || '';
+  const listingType =
+    book.listingType ||
+    book.type ||
+    book.listingIntent ||
+    'Sell';
+
   const condition = book.condition || 'Good';
   const price = typeof book.price === 'number' ? book.price : 0;
-  const location = book.locationCollege || book.location || 'Main Campus Library';
-  const description = book.description || book.conditionNotes || 'No additional description provided.';
-  const coverImage = book.image || (Array.isArray(book.images) && book.images[0] ? book.images[0] : '');
+  const location =
+    book.locationCollege ||
+    book.location ||
+    book.campusLocation ||
+    book.campusHostelLocation ||
+    'Main Campus Library';
+
+  const description =
+    book.description ||
+    book.conditionNotes ||
+    'No additional description provided.';
+
+  const coverImage =
+    book.image ||
+    (Array.isArray(book.images) && book.images[0] ? book.images[0] : '');
 
   const normalizedType = String(listingType).toLowerCase();
   const isBorrow = normalizedType.includes('borrow') || normalizedType.includes('lend');
   const isExchange = normalizedType.includes('exchange');
-  const isOwner = user && (book.owner?._id === user._id || book.owner === user._id);
+
+  const getOwnerId = () => {
+    if (!book.owner) return null;
+    if (typeof book.owner === 'object') return book.owner._id || book.owner.id || null;
+    return book.owner;
+  };
+
+  const currentUserId = user?._id || user?.id;
+  const ownerId = getOwnerId();
+  const isMyBook = Boolean(currentUserId && ownerId && String(currentUserId) === String(ownerId));
 
   const badgeVariant = isExchange ? 'exchange' : isBorrow ? 'borrow' : 'sell';
 
@@ -295,9 +242,6 @@ const BookDetailPage = () => {
           <Link to="/books" className="text-terracotta text-small">
             &larr; Back to Catalog
           </Link>
-          <div style={{ marginTop: '0.75rem' }}>
-            <Badge variant="terracotta">Module 2 • Book Volume Profile</Badge>
-          </div>
         </div>
 
         <div className="grid-2" style={{ gap: '2.5rem', alignItems: 'start' }}>
@@ -348,6 +292,11 @@ const BookDetailPage = () => {
               <Badge variant={badgeVariant}>{listingType}</Badge>
               <Badge variant={condition}>{condition}</Badge>
               {book.category && <Badge variant="secondary">{book.category}</Badge>}
+              {isMyBook && (
+                <Badge variant="terracotta">
+                  Your Listing
+                </Badge>
+              )}
             </div>
 
             <h1 style={{ marginTop: '0.25rem', marginBottom: '0.5rem', fontSize: '1.85rem' }}>
@@ -358,19 +307,16 @@ const BookDetailPage = () => {
               by {author}
             </p>
 
-            {listingType === 'Sell' && price > 0 && (
+            {!isBorrow && price > 0 && (
               <h2 className="text-terracotta" style={{ marginBottom: '1.25rem' }}>
                 ₹{price}
               </h2>
             )}
 
             {isBorrow && (
-              <div style={{ marginBottom: '1.25rem' }}>
-                <h3 className="text-terracotta" style={{ margin: 0 }}>
-                  Available for Free Campus Borrowing
-                </h3>
-                <small className="text-muted">Standard lending period: up to {book.rentalPeriodDays || 14} days</small>
-              </div>
+              <h3 className="text-terracotta" style={{ marginBottom: '1.25rem' }}>
+                Available for Borrow & Loan
+              </h3>
             )}
 
             {isExchange && (
@@ -392,6 +338,12 @@ const BookDetailPage = () => {
                 {description}
               </p>
 
+              {isbn && (
+                <p className="text-small" style={{ marginBottom: '0.5rem' }}>
+                  <strong>ISBN:</strong> {isbn}
+                </p>
+              )}
+
               <p className="text-small" style={{ marginBottom: '0.5rem' }}>
                 <strong>📍 Campus Location:</strong> {location}
               </p>
@@ -410,31 +362,46 @@ const BookDetailPage = () => {
             </div>
 
             {/* Interaction Buttons */}
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              {isOwner ? (
-                <Badge variant="terracotta" size="md">
-                  ✓ This is your volume listing
-                </Badge>
-              ) : isBorrow ? (
-                <Button variant="primary" size="lg" onClick={handleOpenRequest}>
-                  🤝 Request to Borrow
-                </Button>
-              ) : isExchange ? (
-                <Button variant="primary" size="lg" onClick={handleOpenRequest}>
-                  🔄 Propose Exchange
-                </Button>
-              ) : (
-                <Button variant="primary" size="lg" onClick={handleOpenRequest}>
-                  🛒 Contact Seller
-                </Button>
-              )}
+            {isMyBook ? (
+              <div
+                style={{
+                  padding: '1rem',
+                  border: '1px solid var(--color-border-subtle, #E4D5C1)',
+                  borderRadius: 'var(--radius-md, 8px)',
+                  background: 'var(--color-paper-dark, #F2E7D7)',
+                }}
+              >
+                <h4 style={{ marginBottom: '0.5rem' }}>Your Listing</h4>
+                <p className="text-small text-muted" style={{ marginBottom: '1rem' }}>
+                  This is your own book. You cannot request to buy, borrow, or exchange your own listing.
+                </p>
+                <Link to="/dashboard/listings">
+                  <Button variant="outline">View My Books</Button>
+                </Link>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                {isBorrow ? (
+                  <Button variant="primary" size="lg" onClick={handleOpenRequest}>
+                    🤝 Request to Borrow
+                  </Button>
+                ) : isExchange ? (
+                  <Button variant="primary" size="lg" onClick={handleOpenRequest}>
+                    🔄 Propose Exchange
+                  </Button>
+                ) : (
+                  <Button variant="primary" size="lg" onClick={handleOpenRequest}>
+                    🛒 Contact Seller
+                  </Button>
+                )}
 
-              <Link to="/exchange">
-                <Button variant="outline" size="lg">
-                  Explore Exchange Hub
-                </Button>
-              </Link>
-            </div>
+                <Link to="/exchange">
+                  <Button variant="outline" size="lg">
+                    Explore Exchange Hub
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

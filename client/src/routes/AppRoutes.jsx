@@ -11,6 +11,7 @@ import DiscoveryPage from '../pages/home/DiscoveryPage';
 import BookListingPage from '../pages/books/BookListingPage';
 import BookDetailPage from '../pages/books/BookDetailPage';
 import AddBookPage from '../pages/books/AddBookPage';
+import EditBookPage from '../pages/books/EditBookPage';
 
 // Module 3 Pages
 import ExchangeHubPage from '../pages/exchange/ExchangeHubPage';
@@ -19,6 +20,11 @@ import MyRequestsPage from '../pages/exchange/MyRequestsPage';
 // Module 4 Pages
 import UserDashboardPage from '../pages/dashboard/UserDashboardPage';
 import MyListingsPage from '../pages/dashboard/MyListingsPage';
+import MyBorrowedBooksPage from '../pages/dashboard/MyBorrowedBooksPage';
+import MyLentBooksPage from '../pages/dashboard/MyLentBooksPage';
+import ProfilePage from '../pages/profile/ProfilePage';
+import EditProfilePage from '../pages/profile/EditProfilePage';
+import TransactionHistoryPage from '../pages/dashboard/TransactionHistoryPage';
 
 // Module 5 Pages
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
@@ -27,6 +33,8 @@ import NotificationsPage from '../pages/admin/NotificationsPage';
 // Auth Pages
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
+import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 
 // 404
 import NotFoundPage from '../pages/NotFoundPage';
@@ -41,7 +49,9 @@ const AppRoutes = () => {
 
         {/* Module 2: Book Listing & Details */}
         <Route path="books" element={<BookListingPage />} />
+
         <Route path="books/:id" element={<BookDetailPage />} />
+
         <Route
           path="books/add"
           element={
@@ -51,8 +61,18 @@ const AppRoutes = () => {
           }
         />
 
+        <Route
+          path="books/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditBookPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Module 3: Borrow / Lend / Exchange */}
         <Route path="exchange" element={<ExchangeHubPage />} />
+
         <Route
           path="exchange/requests"
           element={
@@ -71,11 +91,58 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="dashboard/listings"
           element={
             <ProtectedRoute>
               <MyListingsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="dashboard/borrowed"
+          element={
+            <ProtectedRoute>
+              <MyBorrowedBooksPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="dashboard/lent"
+          element={
+            <ProtectedRoute>
+              <MyLentBooksPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="dashboard/transactions"
+          element={
+            <ProtectedRoute>
+              <TransactionHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* User Profile */}
+        <Route
+          path="profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Edit Profile */}
+        <Route
+          path="profile/edit"
+          element={
+            <ProtectedRoute>
+              <EditProfilePage />
             </ProtectedRoute>
           }
         />
@@ -89,8 +156,19 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="admin/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Keep the shorter notifications URL working for navigation links/bookmarks. */}
+        <Route
+          path="notifications"
           element={
             <ProtectedRoute>
               <NotificationsPage />
@@ -101,6 +179,8 @@ const AppRoutes = () => {
         {/* Auth Routes */}
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
 
         {/* 404 Catch-All */}
         <Route path="*" element={<NotFoundPage />} />

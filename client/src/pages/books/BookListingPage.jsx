@@ -2,15 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import BookCard from '../../components/books/BookCard';
 import Button from '../../components/common/Button';
-import Badge from '../../components/common/Badge';
 import Input from '../../components/common/Input';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
 import ErrorAlert from '../../components/common/ErrorAlert';
+import Badge from '../../components/common/Badge';
 import bookService from '../../services/bookService';
+import { useAuth } from '../../context/AuthContext';
 
 const BookListingPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +20,7 @@ const BookListingPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('');
 
-  // Fetch books from API endpoint
+  // Fetch books from API endpoint with debounced search and filtering
   const fetchCatalog = useCallback(async () => {
     try {
       setLoading(true);
@@ -54,25 +56,62 @@ const BookListingPage = () => {
     setFilterType('');
   };
 
+  const isMyBook = (book) => {
+    if (!user || !book.owner) {
+      return false;
+    }
+
+    const ownerId =
+      typeof book.owner === 'object'
+        ? book.owner._id || book.owner.id
+        : book.owner;
+
+    const userId = user._id || user.id;
+
+    return Boolean(
+      ownerId &&
+      userId &&
+      String(ownerId) === String(userId)
+    );
+  };
+
   return (
-    <div className="container" style={{ padding: '2rem 1rem', minHeight: '70vh' }}>
-      {/* Module 2 Header Card */}
-      <div className="paper-card" style={{ marginBottom: '2rem' }}>
-        <div className="flex-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
+    <main
+      className="container"
+      style={{
+        padding: '2rem 1rem',
+        minHeight: '65vh',
+        color: 'var(--text-primary, #30231e)',
+      }}
+    >
+      <section
+        className="paper-card"
+        style={{ marginBottom: '2rem', padding: '1.5rem' }}
+      >
+        <div
+          className="flex-between"
+          style={{ gap: '1rem', flexWrap: 'wrap' }}
+        >
           <div>
-            <Badge variant="terracotta">Module 2 • Campus Library Catalog</Badge>
-            <h2 style={{ marginTop: '0.5rem', marginBottom: '0.25rem' }}>Browse Books</h2>
-            <p className="text-muted" style={{ margin: 0 }}>
-              Search and explore second-hand textbooks available for sale, borrow, or exchange across campus.
+            <h1 style={{ marginTop: 0, marginBottom: '0.5rem' }}>
+              Campus Book Catalog
+            </h1>
+
+            <p className="text-muted" style={{ marginBottom: 0 }}>
+              Discover textbooks to buy, borrow, or exchange with your
+              campus community.
             </p>
           </div>
-          <Link to="/books/add">
+
+          <Link to="/books/add" style={{ textDecoration: 'none' }}>
             <Button variant="primary">+ List a Book</Button>
           </Link>
         </div>
 
-        {/* Filter Bar */}
-        <div className="grid-3" style={{ marginTop: '1.5rem', alignItems: 'end' }}>
+        <div
+          className="grid-3"
+          style={{ marginTop: '1.5rem', alignItems: 'end' }}
+        >
           <Input
             placeholder="Search by title or author..."
             value={searchQuery}
@@ -85,9 +124,9 @@ const BookListingPage = () => {
             onChange={(e) => setFilterType(e.target.value)}
             options={[
               { value: '', label: 'All Listing Types' },
-              { value: 'Sell', label: 'Buy / Sell Only' },
-              { value: 'Borrow', label: 'Borrow / Lend Only' },
-              { value: 'Exchange', label: 'Exchange Trade Only' },
+              { value: 'Sell', label: 'Buy / Sell' },
+              { value: 'Borrow', label: 'Borrow / Lend' },
+              { value: 'Exchange', label: 'Book Exchange' },
             ]}
           />
 
@@ -97,7 +136,7 @@ const BookListingPage = () => {
             </Button>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Error Alert */}
       {error && (
@@ -108,7 +147,7 @@ const BookListingPage = () => {
 
       {/* Catalog Display */}
       {loading ? (
-        <Loader text="Retrieving campus library catalog..." />
+        <Loader text="Loading available books..." />
       ) : books.length === 0 ? (
         <EmptyState
           title={searchQuery || filterType ? 'No Books Matched' : 'No Books Listed Yet'}
@@ -128,21 +167,54 @@ const BookListingPage = () => {
         />
       ) : (
         <>
-          <div className="flex-between" style={{ marginBottom: '1.25rem' }}>
-            <h3 style={{ margin: 0 }}>Available Volumes</h3>
-            <span className="text-muted text-small">
-              Showing {books.length} {books.length === 1 ? 'book' : 'books'}
+          <div
+            className="flex-between"
+            style={{ marginBottom: '1.25rem', flexWrap: 'wrap' }}
+          >
+            <h2 style={{ margin: 0 }}>Available Listings</h2>
+
+            <span className="text-muted">
+              {books.length} {books.length === 1 ? 'book' : 'books'} found
             </span>
           </div>
 
           <div className="grid-3">
-            {books.map((book) => (
-              <BookCard key={book._id || book.id} book={book} actionLabel="View Details" />
-            ))}
+            {books.map((book) => {
+              const myBook = isMyBook(book);
+
+              return (
+                <div
+                  key={book._id || book.id}
+                  style={{ position: 'relative' }}
+                >
+                  {myBook && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '0.75rem',
+                        right: '0.75rem',
+                        zIndex: 2,
+                      }}
+                    >
+                      <Badge variant="terracotta">
+                        Your Listing
+                      </Badge>
+                    </div>
+                  )}
+
+                  <BookCard
+                    book={book}
+                    actionLabel={
+                      myBook ? 'View Your Listing' : 'View Details'
+                    }
+                  />
+                </div>
+              );
+            })}
           </div>
         </>
       )}
-    </div>
+    </main>
   );
 };
 

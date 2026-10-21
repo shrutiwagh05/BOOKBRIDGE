@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
       if (storedToken) {
         try {
           const response = await authService.getMe();
-          setUser(response.data);
+          setUser(response?.data?.data || response?.data || response);
         } catch (error) {
           console.warn('[AuthContext] Stored session invalid, clearing token');
           localStorage.removeItem('bookbridge_token');
@@ -36,7 +36,8 @@ export const AuthProvider = ({ children }) => {
     setAuthError(null);
     try {
       const response = await authService.login({ email, password });
-      const { token: receivedToken, ...userData } = response.data;
+      const payload = response?.data?.data || response?.data || response;
+      const { token: receivedToken, ...userData } = payload;
 
       localStorage.setItem('bookbridge_token', receivedToken);
       setToken(receivedToken);
@@ -56,7 +57,8 @@ export const AuthProvider = ({ children }) => {
     setAuthError(null);
     try {
       const response = await authService.register(userData);
-      const { token: receivedToken, ...createdUser } = response.data;
+      const payload = response?.data?.data || response?.data || response;
+      const { token: receivedToken, ...createdUser } = payload;
 
       localStorage.setItem('bookbridge_token', receivedToken);
       setToken(receivedToken);
