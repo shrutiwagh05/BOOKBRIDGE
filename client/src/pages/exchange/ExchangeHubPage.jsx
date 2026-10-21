@@ -439,7 +439,7 @@ const ExchangeHubPage = () => {
                 ) : (
                   <div className="bb-no-books-warning">
                     <p className="text-small" style={{ margin: 0 }}>
-                      ⚠️ <strong>No volumes currently on your shelf:</strong> You don't have any available books listed to offer for a barter exchange. You can still write a proposal message, or <Link to="/books/add" target="_blank" className="text-terracotta">list a book first</Link>.
+                      ⚠️ <strong>No volumes currently on your shelf:</strong> You don't have any available books listed to offer for a barter exchange. Please list an available book first, or <Link to="/books/add" target="_blank" className="text-terracotta">list a book first</Link>.
                     </p>
                   </div>
                 )}
