@@ -1,6 +1,13 @@
 name: Frontend build check
+# Keep the final-submission branch buildable before any integration or deployment.
 
 on:
+  push:
+    branches:
+      - rebuild/reliable-final-submission
+    paths:
+      - "client/**"
+      - ".github/workflows/frontend-build-check.yml"
   pull_request:
     branches:
       - integration-demo
