@@ -142,21 +142,21 @@ const MyRequestsPage = () => {
   };
 
   // Helper: map status string to Badge variant
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, type) => {
     switch (status) {
       case 'pending':
         return <Badge variant="warning">Pending Review</Badge>;
       case 'accepted':
       case 'approved':
       case 'active':
-        return <Badge variant="success">Active Loan</Badge>;
+        return <Badge variant="success">{type === 'exchange' ? 'Exchange in Progress' : 'Active Loan'}</Badge>;
       case 'rejected':
         return <Badge variant="danger">Rejected</Badge>;
       case 'cancelled':
         return <Badge variant="info">Cancelled</Badge>;
       case 'returned':
       case 'completed':
-        return <Badge variant="info">Returned & Done</Badge>;
+        return <Badge variant="info">{type === 'exchange' ? 'Exchange Completed' : 'Returned & Done'}</Badge>;
       default:
         return <Badge variant="info">{status}</Badge>;
     }
@@ -351,7 +351,7 @@ const MyRequestsPage = () => {
                   {/* Right Column: Status & Actions */}
                   <div className="bb-req-status-col">
                     <div className="bb-status-badge-container">
-                      {getStatusBadge(req.status)}
+                      {getStatusBadge(req.status, req.type)}
                       <span className="text-small text-muted" style={{ display: 'block', marginTop: '4px' }}>
                         Requested: {formatDate(req.createdAt)}
                       </span>
@@ -544,7 +544,7 @@ const MyRequestsPage = () => {
       <Modal
         isOpen={activeModal === 'return'}
         onClose={handleCloseModal}
-        title="Confirm Volume Return"
+        title={selectedRequest?.type === 'exchange' ? "Complete Book Exchange" : "Confirm Volume Return"}
         footer={
           <>
             <Button variant="outline" disabled={actionLoading} onClick={handleCloseModal}>
@@ -564,14 +564,22 @@ const MyRequestsPage = () => {
         {selectedRequest && (
           <div>
             <p>
-              Confirm that the physical volume <strong>"{selectedRequest.book?.title}"</strong> has been safely handed back and returned.
+              {selectedRequest.type === 'exchange' ? (
+                <>Confirm that the exchange of <strong>"{selectedRequest.book?.title}"</strong> has been completed with the other student.</>
+              ) : (
+                <>Confirm that the physical volume <strong>"{selectedRequest.book?.title}"</strong> has been safely handed back and returned.</>
+              )}
             </p>
             <div className="bb-modal-book-box">
               <span className="text-small" style={{ color: 'var(--color-success)', fontWeight: 600 }}>
                 ✓ Availability Restoration:
               </span>
               <p className="text-small text-muted" style={{ margin: '4px 0 0 0' }}>
-                Confirming will mark this transaction as <strong>Returned & Completed</strong>, and restore this book's availability on campus shelves so other students can discover and borrow it.
+                {selectedRequest.type === 'exchange' ? (
+                  <>Confirming will mark the exchange as <strong>Completed</strong>. The exchanged books remain with their new owners.</>
+                ) : (
+                  <>Confirming will mark this transaction as <strong>Returned & Completed</strong> and make the borrowed book available again.</>
+                )}
               </p>
             </div>
           </div>
