@@ -47,18 +47,14 @@ const ExchangeHubPage = () => {
       try {
         setLoading(true);
         const res = await bookService.getBooks();
-        if (res.data && res.data.length > 0) {
-          // Filter to books meant for Borrow or Exchange that are currently available
-          const exchangeable = res.data.filter(
-            (b) => (b.listingType === 'Borrow' || b.listingType === 'Exchange') && b.status === 'available'
-          );
-          setBooks(exchangeable.length > 0 ? exchangeable : fallbackCampusBooks);
-        } else {
-          setBooks(fallbackCampusBooks);
-        }
+        const liveBooks = Array.isArray(res.data) ? res.data : [];
+        // Only show real, available Borrow/Exchange listings returned by the API.
+        setBooks(liveBooks.filter(
+          (book) => ['Borrow', 'Exchange'].includes(book.listingType) && book.status === 'available'
+        ));
       } catch (err) {
-        console.info('[ExchangeHub] Using campus fallback dataset');
-        setBooks(fallbackCampusBooks);
+        setBooks([]);
+        setModalError(err.message || 'Could not load available books. Please try again.');
       } finally {
         setLoading(false);
       }
