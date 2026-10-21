@@ -19,15 +19,22 @@ Branch: `rebuild/reliable-final-submission`
 - Rejection notes are trimmed and bounded to avoid oversized input.
 
 ## Automated validation and deployment
-- Latest relevant commit: `3999df2969073969ecfc0a507e1ec035a7009208` (`fix: make borrow return lifecycle transactional`).
-- GitHub Actions run: https://github.com/shrutiwagh05/BOOKBRIDGE/actions/runs/39659074320
-- Backend syntax check and backend unit tests passed in that run.
-- Isolated Render test service deployed commit `3999df2969073969ecfc0a507e1ec035a7009208` and reported a successful MongoDB connection.
+- Backend fix commit: `3999df2969073969ecfc0a507e1ec035a7009208` (`fix: make borrow return lifecycle transactional`).
+- CI workflow fix commit: `0531337dfedb40df2834dd4f36951a3388ef188a` (`ci: run backend checks on exchange PR target branch`).
+- Latest workflow run passed: https://github.com/shrutiwagh05/BOOKBRIDGE/actions/runs/39662363790
+- Backend syntax check and backend unit tests passed.
+- Isolated Render test service deployed backend commit `3999df2969073969ecfc0a507e1ec035a7009208` and reported a successful MongoDB connection.
 - Vercel preview: https://bookbridge-client-git-rebuild-reliable-final-944dc4-shruti-a3dc.vercel.app/
 
+## Manual verification
+- User signed in to the preview and opened an existing outgoing exchange request for *Engineering Mathematics II*.
+- User clicked **Mark Exchange Complete** and confirmed the status remained completed after refreshing the page.
+- This verifies the exchange-completion UI/status persistence path in the preview.
+- Borrow/return was not tested: the available existing listing on the second account was an Exchange Offer, and no Borrow listing was available. Do not claim borrow/return is end-to-end verified.
+
 ## Remaining verification / known caveats
-- A full authenticated end-to-end API/database smoke test with two test accounts has not been independently verified after the latest deployment. Do not claim that it passed.
-- Confirm in the UI that auto-rejected competing requests display the expected status/message.
+- Borrow acceptance and return still need an existing Borrow listing to test in the isolated preview.
+- Ownership transfer of both exchange books and competing-request auto-rejection should be checked if time permits; the manual completion check alone does not prove these database behaviors.
 - Keep testing isolated from production accounts and production book records.
 
 ## Smoke-test checklist (isolated test data only)
