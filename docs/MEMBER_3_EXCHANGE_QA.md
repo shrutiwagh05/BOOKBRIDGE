@@ -8,15 +8,19 @@ Branch: `rebuild/reliable-final-submission`
 - Request model: `server/src/models/ExchangeRequest.js`
 - Frontend API wrapper: `client/src/services/exchangeService.js`
 
-## Risks to address before calling this module complete
-1. Request creation accepts `ownerId` from the request body and uses it instead of always deriving the owner from the selected book. The server should derive owner from `book.owner` to prevent inconsistent ownership.
-2. Request type should be explicitly validated as `borrow` or `exchange` (and `purchase` only if purchase is intentionally supported end-to-end).
-3. Borrow duration should be validated as a sensible positive integer with a defined maximum.
-4. Exchange requests should require an offered book if the product requirements say a direct exchange must include one.
-5. Accepting a request updates the request and book in separate writes; concurrent accept attempts can race. At minimum, re-check current status and book availability before changing state; ideally use a MongoDB transaction if the deployment supports it.
-6. Returning an exchange currently restores both books to available; confirm whether this is the intended exchange lifecycle. For a permanent exchange, return semantics may be incorrect.
-7. Rejecting a request writes the rejection reason into the original message field. Prefer a separate rejectionReason field if the UI needs it.
-8. The controller's auto-rejection uses `updateMany` for conflicting requests; verify its status and messaging behavior with the UI.
+## Changes made on this branch
+- Request creation now ignores client-supplied `ownerId` and derives the owner from the selected book.
+- Only `borrow` and `exchange` request types are accepted by this flow.
+- Borrow duration is validated as a whole number from 1 to 365 days; messages must be text and at most 500 characters.
+- Direct exchanges require an offered book that belongs to the requester, is available, and is not the same book being requested.
+- Accepting an exchange re-checks the offered book and transfers ownership of both books; marking an exchange complete no longer makes the transferred books available again.
+- Returning a borrowed book marks it returned and restores the requested book to available.
+
+## Remaining risks before calling this module complete
+1. Accepting a request updates the request and books in separate writes; concurrent accept attempts or a mid-operation database failure can leave inconsistent state. Use a MongoDB transaction where supported, or another atomic strategy, before production.
+2. Rejecting a request writes the rejection reason into the original message field. Prefer a separate `rejectionReason` field if the UI needs it.
+3. The controller auto-rejects other pending requests with `updateMany`; verify its status and messaging behavior with the UI.
+4. The exchange lifecycle and ownership transfer need a full frontend-to-backend smoke test with two isolated test users and books. No runtime/integration tests have been run by this change yet.
 
 ## Required manual smoke tests (isolated test database only)
 - User A cannot request their own book.
