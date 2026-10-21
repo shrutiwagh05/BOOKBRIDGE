@@ -14,62 +14,6 @@ import EmptyState from '../../components/common/EmptyState';
 import ErrorAlert from '../../components/common/ErrorAlert';
 import './ExchangeHub.css';
 
-// Fallback campus books for demo if database has no entries yet
-const fallbackCampusBooks = [
-  {
-    _id: 'demo-b-1',
-    title: 'Operating System Concepts (10th Edition)',
-    author: 'Abraham Silberschatz, Peter B. Galvin',
-    category: 'Computer Science & IT',
-    listingType: 'Borrow',
-    rentalPeriodDays: 14,
-    condition: 'Good',
-    locationCollege: 'Department of Computing',
-    status: 'available',
-    description: 'Silberschatz OS concepts dinosaur book. All chapters intact, clean margins.',
-    owner: { _id: 'owner-101', name: 'Aarav Sharma', college: 'Campus Library Desk' },
-  },
-  {
-    _id: 'demo-b-2',
-    title: 'Design Patterns: Elements of Reusable Object-Oriented Software',
-    author: 'Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides',
-    category: 'Computer Science & IT',
-    listingType: 'Exchange',
-    condition: 'Like New',
-    locationCollege: 'Boys Hostel Wing B',
-    status: 'available',
-    description: 'Gang of Four design patterns reference. Looking to exchange for Database System Concepts.',
-    exchangePreferences: 'Database Systems or Microprocessors',
-    owner: { _id: 'owner-102', name: 'Priya Patel', college: 'CS Dept Block' },
-  },
-  {
-    _id: 'demo-b-3',
-    title: 'Campbell Biology (12th Edition)',
-    author: 'Lisa A. Urry, Michael L. Cain',
-    category: 'Medical & Science',
-    listingType: 'Borrow',
-    rentalPeriodDays: 21,
-    condition: 'Like New',
-    locationCollege: 'Life Sciences Hall',
-    status: 'available',
-    description: 'Heavy hardcover. Willing to lend for 3 weeks for mid-term preparations.',
-    owner: { _id: 'owner-103', name: 'Rohan Deshmukh', college: 'Bio Labs' },
-  },
-  {
-    _id: 'demo-b-4',
-    title: 'Economics (Principles & Applications)',
-    author: 'N. Gregory Mankiw',
-    category: 'Business & Economics',
-    listingType: 'Exchange',
-    condition: 'Good',
-    locationCollege: 'Management Wing',
-    status: 'available',
-    description: 'Core micro/macro concepts. Open to exchanging for Corporate Finance.',
-    exchangePreferences: 'Corporate Finance or Accounting Principles',
-    owner: { _id: 'owner-104', name: 'Neha Joshi', college: 'Commerce Library' },
-  },
-];
-
 const ExchangeHubPage = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
