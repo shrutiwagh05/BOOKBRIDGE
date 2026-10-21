@@ -413,7 +413,7 @@ const MyRequestsPage = () => {
                           variant="secondary"
                           onClick={() => handleOpenActionModal('return', req)}
                         >
-                          ✓ Mark as Returned
+                          {req.type === 'exchange' ? '✓ Mark Exchange Complete' : '✓ Mark as Returned'}
                         </Button>
                       )}
                     </div>
