@@ -1,5 +1,6 @@
 const ExchangeRequest = require('../models/ExchangeRequest');
 const Book = require('../models/Book');
+const { validateExchangeInput } = require('../utils/exchangeValidation');
 
 // @desc    Get user's incoming and outgoing exchange/borrow requests (combined)
 // @route   GET /api/exchanges
@@ -119,21 +120,22 @@ const createExchangeRequest = async (req, res, next) => {
       });
     }
 
-    // 4. Validate request type and exchange details on the server.
-    const requestType = type || (book.listingType === 'Exchange' ? 'exchange' : 'borrow');
-    if (!['borrow', 'exchange'].includes(requestType)) {
-      return res.status(400).json({ success: false, message: 'Request type must be borrow or exchange.' });
+    // Validate the request's type, duration, message, and offered-book fields.
+    const requestedType = type || (book.listingType === 'Exchange' ? 'exchange' : 'borrow');
+    const validation = validateExchangeInput({
+      type: requestedType,
+      durationDays,
+      message,
+      offeredBookId,
+      bookId: book._id,
+      defaultDuration: book.rentalPeriodDays || 14,
+    });
+    if (validation.error) {
+      return res.status(400).json({ success: false, message: validation.error });
     }
 
     let validatedOfferedBookId = null;
-    if (requestType === 'exchange') {
-      if (!offeredBookId) {
-        return res.status(400).json({ success: false, message: 'Select a book to offer in exchange.' });
-      }
-      if (String(offeredBookId) === String(book._id)) {
-        return res.status(400).json({ success: false, message: 'You cannot offer the same book you are requesting.' });
-      }
-
+    if (validation.value.requestType === 'exchange') {
       const offeredBook = await Book.findById(offeredBookId);
       if (!offeredBook) {
         return res.status(404).json({ success: false, message: 'Offered trade book not found.' });
@@ -145,23 +147,11 @@ const createExchangeRequest = async (req, res, next) => {
         return res.status(400).json({ success: false, message: 'The book you offered is currently not available.' });
       }
       validatedOfferedBookId = offeredBook._id;
-    } else if (offeredBookId) {
-      return res.status(400).json({ success: false, message: 'An offered book is only allowed for exchange requests.' });
     }
 
-    const parsedDuration = durationDays === undefined || durationDays === null || durationDays === ''
-      ? (book.rentalPeriodDays || 14)
-      : Number(durationDays);
-    if (!Number.isInteger(parsedDuration) || parsedDuration < 1 || parsedDuration > 365) {
-      return res.status(400).json({ success: false, message: 'Borrow duration must be a whole number between 1 and 365 days.' });
-    }
-    if (message !== undefined && typeof message !== 'string') {
-      return res.status(400).json({ success: false, message: 'Message must be text.' });
-    }
-    const cleanMessage = (message || '').trim();
-    if (cleanMessage.length > 500) {
-      return res.status(400).json({ success: false, message: 'Message cannot exceed 500 characters.' });
-    }
+    const requestType = validation.value.requestType;
+    const loanDuration = validation.value.durationDays;
+    const cleanMessage = validation.value.message;
 
     // Never trust ownerId supplied by the browser; use the actual listing owner.
     const targetOwnerId = book.owner;
