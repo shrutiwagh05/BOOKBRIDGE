@@ -242,13 +242,26 @@ const acceptExchangeRequest = async (req, res, next) => {
     request.returnDueDate = dueDate;
     await request.save();
 
-    // Synchronize book status to borrowed or exchanged
-    book.status = request.type === 'borrow' ? 'borrowed' : 'exchanged';
-    await book.save();
+    // Synchronize the requested book with the accepted transaction.
+    if (request.type === 'borrow') {
+      book.status = 'borrowed';
+      await book.save();
+    } else if (request.type === 'exchange') {
+      // A direct exchange transfers ownership in both directions.
+      const offeredBook = await Book.findById(request.offeredBook);
+      if (!offeredBook || offeredBook.status !== 'available' || offeredBook.owner.toString() !== request.requester.toString()) {
+        return res.status(400).json({
+          success: false,
+          message: 'The offered book is no longer available for this exchange.',
+        });
+      }
 
-    // If exchange with offered book, mark offered book status as exchanged too
-    if (request.type === 'exchange' && request.offeredBook) {
-      await Book.findByIdAndUpdate(request.offeredBook, { status: 'exchanged' });
+      const originalOwnerId = book.owner;
+      book.owner = request.requester;
+      book.status = 'exchanged';
+      offeredBook.owner = originalOwnerId;
+      offeredBook.status = 'exchanged';
+      await Promise.all([book.save(), offeredBook.save()]);
     }
 
     // Auto-reject any conflicting pending requests for the same book
@@ -271,7 +284,7 @@ const acceptExchangeRequest = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Request accepted successfully. Book status has been updated to active loan.',
+      message: request.type === 'borrow' ? 'Borrow request accepted. The book is now marked as borrowed.' : 'Exchange accepted. Ownership of both books has been transferred.',
       data: updated,
     });
   } catch (error) {
