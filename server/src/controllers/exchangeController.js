@@ -262,9 +262,9 @@ const acceptExchangeRequest = async (req, res, next) => {
       // A direct exchange transfers ownership in both directions.
       const originalOwnerId = book.owner;
       book.owner = request.requester;
-      book.status = 'exchanged';
+      book.status = 'available';
       offeredBookForExchange.owner = originalOwnerId;
-      offeredBookForExchange.status = 'exchanged';
+      offeredBookForExchange.status = 'available';
       await Promise.all([book.save(), offeredBookForExchange.save()]);
     }
 
