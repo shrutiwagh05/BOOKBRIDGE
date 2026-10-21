@@ -372,7 +372,7 @@ const ExchangeHubPage = () => {
             <Button
               variant="primary"
               isLoading={submitting}
-              disabled={submitting || !agreeTerms}
+              disabled={submitting || !agreeTerms || (requestType === 'exchange' && (!offeredBookId || userBooksLoading))}
               onClick={handleSubmitRequest}
             >
               {requestType === 'exchange' ? 'Send Exchange Proposal' : 'Confirm Borrow Request'}
