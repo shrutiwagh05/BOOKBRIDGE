@@ -2,43 +2,43 @@
 
 Branch: `rebuild/reliable-final-submission`
 
-## Existing implementation reviewed
+## Implementation reviewed
 - Backend routes: `server/src/routes/exchangeRoutes.js`
 - Backend controller: `server/src/controllers/exchangeController.js`
 - Request model: `server/src/models/ExchangeRequest.js`
 - Frontend API wrapper: `client/src/services/exchangeService.js`
 
-## Changes made on this branch
-- Request creation now ignores client-supplied `ownerId` and derives the owner from the selected book.
-- Only `borrow` and `exchange` request types are accepted by this flow.
-- Borrow duration is validated as a whole number from 1 to 365 days; messages must be text and at most 500 characters.
-- Direct exchanges require an offered book that belongs to the requester, is available, and is not the same book being requested.
-- Accepting an exchange re-checks the offered book and transfers ownership of both books; marking an exchange complete no longer makes the transferred books available again.
-- Returning a borrowed book marks it returned and restores the requested book to available.
+## Implemented
+- Request creation derives the owner from the database listing and ignores browser-supplied owner IDs.
+- Validates request type, listing type, IDs, duration (1–365 days), message type/length, and offered-book ownership/availability.
+- Prevents requesting one's own book and duplicate active requests.
+- Accepting a borrow request marks the book borrowed and sets a due date.
+- Accepting an exchange uses a MongoDB transaction to update request state, transfer ownership of both books, and reject competing pending requests together.
+- Completing an exchange does not undo the ownership transfer.
+- Returning a borrowed book marks it returned and restores availability.
 
-## Remaining risks before calling this module complete
-1. Accepting a request updates the request and books in separate writes; concurrent accept attempts or a mid-operation database failure can leave inconsistent state. Use a MongoDB transaction where supported, or another atomic strategy, before production.
-2. Rejecting a request writes the rejection reason into the original message field. Prefer a separate `rejectionReason` field if the UI needs it.
-3. The controller auto-rejects other pending requests with `updateMany`; verify its status and messaging behavior with the UI.
-4. The exchange lifecycle and ownership transfer need a full frontend-to-backend smoke test with two isolated test users and books. No runtime/integration tests have been run by this change yet.
+## Automated validation
+- GitHub Actions backend syntax check and unit tests: passed on commit `027e16d41ab407d2dff10d039363fd25bcc90bf6`.
+- Backend unit tests: 9 passed, 0 failed.
+- Frontend production build: passed in the CI run for the exchange UI changes.
+- Isolated Render backend: latest commit deployed and MongoDB connection succeeded.
+- Vercel preview: deployment READY and page responds HTTP 200.
 
+## Remaining verification / known caveats
+- A full authenticated end-to-end API/database smoke test has not been independently verified after the latest deployment. Do not claim that it passed.
+- Return/borrow lifecycle writes are not yet wrapped in a MongoDB transaction; consider this hardening before production use.
+- Rejection reason is currently appended to the original message field.
+- Confirm that auto-rejected competing requests display the expected status/message in the UI.
 
-## Automated checks completed
-- GitHub Actions backend syntax check and unit tests passed on this branch: 9 tests passed, 0 failed.
-- GitHub Actions frontend production build passed for the exchange UI changes.
-- These are syntax/build/unit checks only; they do not replace the isolated two-user API/database smoke test.
+## Smoke-test checklist (isolated test data only)
+- Own-book and unavailable-book requests are rejected.
+- Valid borrow/exchange requests can be created.
+- Duplicate pending requests are blocked.
+- Only the listing owner can accept/reject; only the requester can cancel.
+- Exchange acceptance transfers both books to the correct owners and leaves both available.
+- Borrow acceptance marks the book borrowed; return marks it returned and available.
+- Only transaction participants can complete/return eligible requests.
+- State persists after refresh and both dashboards show consistent statuses.
+- Invalid IDs and request types return clear validation errors.
 
-## Required manual smoke tests (isolated test database only)
-- User A cannot request their own book.
-- User A can request an available book owned by User B.
-- User A cannot request a book that is unavailable.
-- Duplicate pending request from User A is blocked.
-- User B can accept/reject User A's pending request; User A and User C cannot accept it.
-- User A can cancel their own pending request; other users cannot.
-- Only participants can mark an eligible request returned.
-- Book and request statuses persist after refresh and are consistent in both users' dashboards.
-- Exchange flow verifies the offered book belongs to the requester and is available.
-- API returns clear validation errors for missing/invalid IDs and invalid request types.
-
-## Acceptance criteria
-Do not mark the module complete until each relevant test is run against an isolated test database and the outcome is recorded. Do not use production accounts or production book records.
+Do not use production accounts or production book records for testing.
