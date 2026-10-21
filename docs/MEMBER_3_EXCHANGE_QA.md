@@ -14,21 +14,21 @@ Branch: `rebuild/reliable-final-submission`
 - Prevents requesting one's own book and duplicate active requests.
 - Accepting a borrow request marks the book borrowed and sets a due date.
 - Accepting an exchange uses a MongoDB transaction to update request state, transfer ownership of both books, and reject competing pending requests together.
-- Completing an exchange does not undo the ownership transfer.
-- Returning a borrowed book marks it returned and restores availability.
+- Returning a borrowed book uses a MongoDB transaction to restore book availability and update the request status atomically.
+- Completing an exchange updates the request status without undoing the ownership transfer.
+- Rejection notes are trimmed and bounded to avoid oversized input.
 
-## Automated validation
-- GitHub Actions backend syntax check and unit tests: passed on commit `027e16d41ab407d2dff10d039363fd25bcc90bf6`.
-- Backend unit tests: 9 passed, 0 failed.
-- Frontend production build: passed in the CI run for the exchange UI changes.
-- Isolated Render backend: latest commit deployed and MongoDB connection succeeded.
-- Vercel preview: deployment READY and page responds HTTP 200.
+## Automated validation and deployment
+- Latest relevant commit: `3999df2969073969ecfc0a507e1ec035a7009208` (`fix: make borrow return lifecycle transactional`).
+- GitHub Actions run: https://github.com/shrutiwagh05/BOOKBRIDGE/actions/runs/39659074320
+- Backend syntax check and backend unit tests passed in that run.
+- Isolated Render test service deployed commit `3999df2969073969ecfc0a507e1ec035a7009208` and reported a successful MongoDB connection.
+- Vercel preview: https://bookbridge-client-git-rebuild-reliable-final-944dc4-shruti-a3dc.vercel.app/
 
 ## Remaining verification / known caveats
-- A full authenticated end-to-end API/database smoke test has not been independently verified after the latest deployment. Do not claim that it passed.
-- Return/borrow lifecycle writes are not yet wrapped in a MongoDB transaction; consider this hardening before production use.
-- Rejection reason is currently appended to the original message field.
-- Confirm that auto-rejected competing requests display the expected status/message in the UI.
+- A full authenticated end-to-end API/database smoke test with two test accounts has not been independently verified after the latest deployment. Do not claim that it passed.
+- Confirm in the UI that auto-rejected competing requests display the expected status/message.
+- Keep testing isolated from production accounts and production book records.
 
 ## Smoke-test checklist (isolated test data only)
 - Own-book and unavailable-book requests are rejected.
