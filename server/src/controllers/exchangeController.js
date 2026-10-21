@@ -199,105 +199,116 @@ const createExchangeRequest = async (req, res, next) => {
 // @route   PATCH /api/exchanges/:id/accept
 // @access  Private
 const acceptExchangeRequest = async (req, res, next) => {
+  let session;
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
       return res.status(400).json({ success: false, message: 'Invalid request ID.' });
     }
-    const request = await ExchangeRequest.findById(req.params.id);
 
-    if (!request) {
-      return res.status(404).json({
-        success: false,
-        message: 'Request not found',
-      });
-    }
+    // Use a transaction so request status, book state/ownership, and conflicting
+    // pending requests either commit together or roll back together.
+    session = await mongoose.startSession();
+    let responseMessage = '';
 
-    // Authorization: Only the owner can accept
-    if (request.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Only the book owner has permission to accept this request',
-      });
-    }
-
-    if (request.status !== 'pending') {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot accept request with status: ${request.status}`,
-      });
-    }
-
-    // Verify book is still available
-    const book = await Book.findById(request.book);
-    if (!book || book.status !== 'available') {
-      return res.status(400).json({
-        success: false,
-        message: 'The requested book is no longer available.',
-      });
-    }
-
-    // Re-validate the offered book before changing any request or book state.
-    let offeredBookForExchange = null;
-    if (request.type === 'exchange') {
-      offeredBookForExchange = await Book.findById(request.offeredBook);
-      if (!offeredBookForExchange || offeredBookForExchange.status !== 'available' || offeredBookForExchange.owner.toString() !== request.requester.toString()) {
-        return res.status(400).json({
-          success: false,
-          message: 'The offered book is no longer available for this exchange.',
-        });
+    await session.withTransaction(async () => {
+      const request = await ExchangeRequest.findById(req.params.id).session(session);
+      if (!request) {
+        const error = new Error('Request not found');
+        error.statusCode = 404;
+        throw error;
       }
-    }
 
-    // Calculate return due date for borrow transactions
-    let dueDate = null;
-    if (request.type === 'borrow') {
-      const days = request.durationDays || 14;
-      dueDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    }
-
-    request.status = 'accepted';
-    request.returnDueDate = dueDate;
-    await request.save();
-
-    // Synchronize the requested book with the accepted transaction.
-    if (request.type === 'borrow') {
-      book.status = 'borrowed';
-      await book.save();
-    } else if (request.type === 'exchange') {
-      // A direct exchange transfers ownership in both directions.
-      const originalOwnerId = book.owner;
-      book.owner = request.requester;
-      book.status = 'available';
-      offeredBookForExchange.owner = originalOwnerId;
-      offeredBookForExchange.status = 'available';
-      await Promise.all([book.save(), offeredBookForExchange.save()]);
-    }
-
-    // Auto-reject any conflicting pending requests for the same book
-    await ExchangeRequest.updateMany(
-      {
-        book: book._id,
-        _id: { $ne: request._id },
-        status: 'pending',
-      },
-      {
-        status: 'rejected',
-        message: 'Book accepted by another student request.',
+      if (request.owner.toString() !== req.user._id.toString()) {
+        const error = new Error('Only the book owner has permission to accept this request');
+        error.statusCode = 403;
+        throw error;
       }
-    );
 
-    const updated = await ExchangeRequest.findById(request._id)
+      if (request.status !== 'pending') {
+        const error = new Error(`Cannot accept request with status: ${request.status}`);
+        error.statusCode = 400;
+        throw error;
+      }
+
+      const book = await Book.findById(request.book).session(session);
+      if (!book || book.status !== 'available') {
+        const error = new Error('The requested book is no longer available.');
+        error.statusCode = 400;
+        throw error;
+      }
+
+      let offeredBookForExchange = null;
+      if (request.type === 'exchange') {
+        offeredBookForExchange = await Book.findById(request.offeredBook).session(session);
+        if (
+          !offeredBookForExchange ||
+          offeredBookForExchange.status !== 'available' ||
+          offeredBookForExchange.owner.toString() !== request.requester.toString()
+        ) {
+          const error = new Error('The offered book is no longer available for this exchange.');
+          error.statusCode = 400;
+          throw error;
+        }
+      }
+
+      let dueDate = null;
+      if (request.type === 'borrow') {
+        const days = request.durationDays || 14;
+        dueDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      }
+
+      request.status = 'accepted';
+      request.returnDueDate = dueDate;
+      await request.save({ session });
+
+      if (request.type === 'borrow') {
+        book.status = 'borrowed';
+        await book.save({ session });
+      } else if (request.type === 'exchange') {
+        const originalOwnerId = book.owner;
+        book.owner = request.requester;
+        book.status = 'available';
+        offeredBookForExchange.owner = originalOwnerId;
+        offeredBookForExchange.status = 'available';
+        await book.save({ session });
+        await offeredBookForExchange.save({ session });
+      }
+
+      await ExchangeRequest.updateMany(
+        {
+          book: book._id,
+          _id: { $ne: request._id },
+          status: 'pending',
+        },
+        {
+          status: 'rejected',
+          message: 'Book accepted by another student request.',
+        },
+        { session }
+      );
+
+      responseMessage = request.type === 'borrow'
+        ? 'Borrow request accepted. The book is now marked as borrowed.'
+        : 'Exchange accepted. Ownership of both books has been transferred.';
+    });
+
+    const updated = await ExchangeRequest.findById(req.params.id)
       .populate('book', 'title author images listingType status')
       .populate('requester', 'name email college')
       .populate('owner', 'name email college');
 
     res.status(200).json({
       success: true,
-      message: request.type === 'borrow' ? 'Borrow request accepted. The book is now marked as borrowed.' : 'Exchange accepted. Ownership of both books has been transferred.',
+      message: responseMessage,
       data: updated,
     });
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ success: false, message: error.message });
+    }
     next(error);
+  } finally {
+    if (session) await session.endSession();
   }
 };
 
