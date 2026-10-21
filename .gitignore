@@ -39,3 +39,6 @@ Thumbs.db
 .cache/
 .eslintcache
 tmp/
+
+# Uploaded book photos
+server/uploads/
