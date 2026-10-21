@@ -10,6 +10,7 @@ on:
   pull_request:
     branches:
       - integration-demo
+      - feat/password-reset-flow
     paths:
       - "server/**"
       - ".github/workflows/backend-syntax-check.yml"
