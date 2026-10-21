@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const ExchangeRequest = require('../models/ExchangeRequest');
 const Book = require('../models/Book');
 const { validateExchangeInput } = require('../utils/exchangeValidation');
@@ -81,6 +82,9 @@ const createExchangeRequest = async (req, res, next) => {
         message: 'Book ID is required',
       });
     }
+    if (!mongoose.isValidObjectId(bookId)) {
+      return res.status(400).json({ success: false, message: 'Invalid book ID.' });
+    }
 
     // 1. Verify book existence and availability
     const book = await Book.findById(bookId);
@@ -136,6 +140,9 @@ const createExchangeRequest = async (req, res, next) => {
 
     let validatedOfferedBookId = null;
     if (validation.value.requestType === 'exchange') {
+      if (!mongoose.isValidObjectId(offeredBookId)) {
+        return res.status(400).json({ success: false, message: 'Invalid offered book ID.' });
+      }
       const offeredBook = await Book.findById(offeredBookId);
       if (!offeredBook) {
         return res.status(404).json({ success: false, message: 'Offered trade book not found.' });
@@ -150,6 +157,12 @@ const createExchangeRequest = async (req, res, next) => {
     }
 
     const requestType = validation.value.requestType;
+    if (requestType === 'borrow' && book.listingType !== 'Borrow') {
+      return res.status(400).json({ success: false, message: 'This listing is not available for borrowing.' });
+    }
+    if (requestType === 'exchange' && book.listingType !== 'Exchange') {
+      return res.status(400).json({ success: false, message: 'This listing is not available for exchange.' });
+    }
     const loanDuration = validation.value.durationDays;
     const cleanMessage = validation.value.message;
 
@@ -187,6 +200,9 @@ const createExchangeRequest = async (req, res, next) => {
 // @access  Private
 const acceptExchangeRequest = async (req, res, next) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid request ID.' });
+    }
     const request = await ExchangeRequest.findById(req.params.id);
 
     if (!request) {
@@ -290,6 +306,9 @@ const acceptExchangeRequest = async (req, res, next) => {
 // @access  Private
 const rejectExchangeRequest = async (req, res, next) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid request ID.' });
+    }
     const request = await ExchangeRequest.findById(req.params.id);
 
     if (!request) {
@@ -337,6 +356,9 @@ const rejectExchangeRequest = async (req, res, next) => {
 // @access  Private
 const cancelExchangeRequest = async (req, res, next) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid request ID.' });
+    }
     const request = await ExchangeRequest.findById(req.params.id);
 
     if (!request) {
@@ -379,6 +401,9 @@ const cancelExchangeRequest = async (req, res, next) => {
 // @access  Private (Owner or Requester)
 const returnExchangeRequest = async (req, res, next) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid request ID.' });
+    }
     const request = await ExchangeRequest.findById(req.params.id);
 
     if (!request) {
