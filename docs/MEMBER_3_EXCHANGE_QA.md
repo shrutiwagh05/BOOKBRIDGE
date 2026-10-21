@@ -22,6 +22,12 @@ Branch: `rebuild/reliable-final-submission`
 3. The controller auto-rejects other pending requests with `updateMany`; verify its status and messaging behavior with the UI.
 4. The exchange lifecycle and ownership transfer need a full frontend-to-backend smoke test with two isolated test users and books. No runtime/integration tests have been run by this change yet.
 
+
+## Automated checks completed
+- GitHub Actions backend syntax check and unit tests passed on this branch: 9 tests passed, 0 failed.
+- GitHub Actions frontend production build passed for the exchange UI changes.
+- These are syntax/build/unit checks only; they do not replace the isolated two-user API/database smoke test.
+
 ## Required manual smoke tests (isolated test database only)
 - User A cannot request their own book.
 - User A can request an available book owned by User B.
