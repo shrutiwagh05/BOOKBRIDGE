@@ -72,7 +72,7 @@ const getOutgoingRequests = async (req, res, next) => {
 // @access  Private
 const createExchangeRequest = async (req, res, next) => {
   try {
-    const { bookId, ownerId, type, offeredBookId, durationDays, message } = req.body;
+    const { bookId, type, offeredBookId, durationDays, message } = req.body;
 
     if (!bookId) {
       return res.status(400).json({
@@ -119,37 +119,53 @@ const createExchangeRequest = async (req, res, next) => {
       });
     }
 
-    // 4. Validate offered book if direct exchange
+    // 4. Validate request type and exchange details on the server.
     const requestType = type || (book.listingType === 'Exchange' ? 'exchange' : 'borrow');
-    let validatedOfferedBookId = null;
-
-    if (requestType === 'exchange') {
-      if (offeredBookId) {
-        const offeredBook = await Book.findById(offeredBookId);
-        if (!offeredBook) {
-          return res.status(404).json({
-            success: false,
-            message: 'Offered trade book not found',
-          });
-        }
-        if (offeredBook.owner.toString() !== req.user._id.toString()) {
-          return res.status(403).json({
-            success: false,
-            message: 'You can only offer books that you own in an exchange proposal',
-          });
-        }
-        if (offeredBook.status !== 'available') {
-          return res.status(400).json({
-            success: false,
-            message: 'The book you offered in trade is currently not available',
-          });
-        }
-        validatedOfferedBookId = offeredBook._id;
-      }
+    if (!['borrow', 'exchange'].includes(requestType)) {
+      return res.status(400).json({ success: false, message: 'Request type must be borrow or exchange.' });
     }
 
-    const targetOwnerId = ownerId || book.owner;
-    const loanDuration = durationDays ? Number(durationDays) : (book.rentalPeriodDays || 14);
+    let validatedOfferedBookId = null;
+    if (requestType === 'exchange') {
+      if (!offeredBookId) {
+        return res.status(400).json({ success: false, message: 'Select a book to offer in exchange.' });
+      }
+      if (String(offeredBookId) === String(book._id)) {
+        return res.status(400).json({ success: false, message: 'You cannot offer the same book you are requesting.' });
+      }
+
+      const offeredBook = await Book.findById(offeredBookId);
+      if (!offeredBook) {
+        return res.status(404).json({ success: false, message: 'Offered trade book not found.' });
+      }
+      if (offeredBook.owner.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, message: 'You can only offer books that you own.' });
+      }
+      if (offeredBook.status !== 'available') {
+        return res.status(400).json({ success: false, message: 'The book you offered is currently not available.' });
+      }
+      validatedOfferedBookId = offeredBook._id;
+    } else if (offeredBookId) {
+      return res.status(400).json({ success: false, message: 'An offered book is only allowed for exchange requests.' });
+    }
+
+    const parsedDuration = durationDays === undefined || durationDays === null || durationDays === ''
+      ? (book.rentalPeriodDays || 14)
+      : Number(durationDays);
+    if (!Number.isInteger(parsedDuration) || parsedDuration < 1 || parsedDuration > 365) {
+      return res.status(400).json({ success: false, message: 'Borrow duration must be a whole number between 1 and 365 days.' });
+    }
+    if (message !== undefined && typeof message !== 'string') {
+      return res.status(400).json({ success: false, message: 'Message must be text.' });
+    }
+    const cleanMessage = (message || '').trim();
+    if (cleanMessage.length > 500) {
+      return res.status(400).json({ success: false, message: 'Message cannot exceed 500 characters.' });
+    }
+
+    // Never trust ownerId supplied by the browser; use the actual listing owner.
+    const targetOwnerId = book.owner;
+    const loanDuration = parsedDuration;
 
     const exchange = await ExchangeRequest.create({
       book: bookId,
@@ -158,7 +174,7 @@ const createExchangeRequest = async (req, res, next) => {
       type: requestType,
       offeredBook: validatedOfferedBookId,
       durationDays: loanDuration,
-      message: message ? message.trim() : '',
+      message: cleanMessage,
       status: 'pending',
     });
 
@@ -386,24 +402,19 @@ const returnExchangeRequest = async (req, res, next) => {
       });
     }
 
-    request.status = 'returned';
+    // Borrowed books return to availability; exchanges are completed transfers.
+    const isBorrow = request.type === 'borrow';
+    request.status = isBorrow ? 'returned' : 'completed';
     await request.save();
 
-    // Restore book availability in Book collection
-    const book = await Book.findById(request.book);
-    if (book) {
-      book.status = 'available';
-      await book.save();
-    }
-
-    // If direct trade with offered book, restore offered book too
-    if (request.type === 'exchange' && request.offeredBook) {
-      const offered = await Book.findById(request.offeredBook);
-      if (offered) {
-        offered.status = 'available';
-        await offered.save();
+    if (isBorrow) {
+      const book = await Book.findById(request.book);
+      if (book) {
+        book.status = 'available';
+        await book.save();
       }
     }
+    // Do not reset exchanged books to available: the exchange is a completed transfer.
 
     const updated = await ExchangeRequest.findById(request._id)
       .populate('book', 'title author images listingType status')
@@ -412,7 +423,7 @@ const returnExchangeRequest = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Volume marked as returned! Book is now available on campus shelves again.',
+      message: isBorrow ? 'Book marked as returned and is available again.' : 'Exchange marked as completed.',
       data: updated,
     });
   } catch (error) {
