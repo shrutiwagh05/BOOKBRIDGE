@@ -231,6 +231,18 @@ const acceptExchangeRequest = async (req, res, next) => {
       });
     }
 
+    // Re-validate the offered book before changing any request or book state.
+    let offeredBookForExchange = null;
+    if (request.type === 'exchange') {
+      offeredBookForExchange = await Book.findById(request.offeredBook);
+      if (!offeredBookForExchange || offeredBookForExchange.status !== 'available' || offeredBookForExchange.owner.toString() !== request.requester.toString()) {
+        return res.status(400).json({
+          success: false,
+          message: 'The offered book is no longer available for this exchange.',
+        });
+      }
+    }
+
     // Calculate return due date for borrow transactions
     let dueDate = null;
     if (request.type === 'borrow') {
@@ -248,20 +260,12 @@ const acceptExchangeRequest = async (req, res, next) => {
       await book.save();
     } else if (request.type === 'exchange') {
       // A direct exchange transfers ownership in both directions.
-      const offeredBook = await Book.findById(request.offeredBook);
-      if (!offeredBook || offeredBook.status !== 'available' || offeredBook.owner.toString() !== request.requester.toString()) {
-        return res.status(400).json({
-          success: false,
-          message: 'The offered book is no longer available for this exchange.',
-        });
-      }
-
       const originalOwnerId = book.owner;
       book.owner = request.requester;
       book.status = 'exchanged';
-      offeredBook.owner = originalOwnerId;
-      offeredBook.status = 'exchanged';
-      await Promise.all([book.save(), offeredBook.save()]);
+      offeredBookForExchange.owner = originalOwnerId;
+      offeredBookForExchange.status = 'exchanged';
+      await Promise.all([book.save(), offeredBookForExchange.save()]);
     }
 
     // Auto-reject any conflicting pending requests for the same book
