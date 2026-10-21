@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import bookService from '../../services/bookService';
-import userService from '../../services/userService';
 import exchangeService from '../../services/exchangeService';
 import BookCard from '../../components/books/BookCard';
 import Button from '../../components/common/Button';
@@ -71,12 +70,11 @@ const ExchangeHubPage = () => {
       if (isAuthenticated) {
         try {
           setUserBooksLoading(true);
-          const res = await userService.getProfile();
-          if (res.data?.myListings) {
-            setUserBooks(res.data.myListings.filter((b) => b.status === 'available'));
-          }
+          const res = await bookService.getMyListings();
+          setUserBooks(Array.isArray(res.data) ? res.data.filter((book) => book.status === 'available') : []);
         } catch (err) {
-          console.warn('[ExchangeHub] Could not load user listings');
+          setUserBooks([]);
+          setModalError(err.message || 'Could not load your available books. Please refresh and try again.');
         } finally {
           setUserBooksLoading(false);
         }
