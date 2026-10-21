@@ -172,8 +172,8 @@ const ExchangeHubPage = () => {
       return;
     }
 
-    if (requestType === 'exchange' && !offeredBookId && userBooks.length > 0) {
-      setModalError('Please select one of your listed books to offer in trade.');
+    if (requestType === 'exchange' && !offeredBookId) {
+      setModalError('To propose an exchange, select one of your own available listed books.');
       return;
     }
 
@@ -183,7 +183,6 @@ const ExchangeHubPage = () => {
 
       const payload = {
         bookId: targetBook._id,
-        ownerId: targetBook.owner?._id || targetBook.owner,
         type: requestType,
         durationDays: requestType === 'borrow' ? Number(durationDays) : undefined,
         offeredBookId: requestType === 'exchange' ? offeredBookId : undefined,
