@@ -1,4 +1,5 @@
 name: Frontend build check
+# Keep the final-submission branch buildable before any integration or deployment.
 
 on:
   push:
