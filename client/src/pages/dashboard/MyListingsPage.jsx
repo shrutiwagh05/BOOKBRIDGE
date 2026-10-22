@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
+import EmptyState from '../../components/common/EmptyState';
 import Loader from '../../components/common/Loader';
 import BookCard from '../../components/books/BookCard';
 import bookService from '../../services/bookService';
@@ -15,47 +16,36 @@ const MyListingsPage = () => {
   const [actionLoading, setActionLoading] = useState('');
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchMyListings = async () => {
-      try {
-        setLoading(true);
-        setError('');
-
-        const res = await bookService.getMyListings();
-
-        if (isMounted) {
-          setBooks(Array.isArray(res.data) ? res.data : []);
-        }
-      } catch (err) {
-        console.error('Failed to load your book listings:', err);
-
-        if (isMounted) {
-          setError(
-            err.response?.data?.message ||
-              err.message ||
-              'Unable to load your book listings.'
-          );
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
     fetchMyListings();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
+
+  const fetchMyListings = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const res = await bookService.getMyListings();
+      setBooks(res.data?.data ?? res.data ?? []);
+    } catch (err) {
+      console.error('[MyListings] Failed to load listings:', err);
+      setError(
+        err.response?.data?.message ||
+        err.message ||
+        'Unable to load your book listings.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDelete = async (bookId) => {
     const confirmed = window.confirm(
       'Are you sure you want to delete this book listing? This action cannot be undone.'
     );
 
+    if (!confirmed) {
+      return;
+    }
     if (!confirmed) return;
 
     try {
@@ -64,16 +54,16 @@ const MyListingsPage = () => {
 
       await bookService.deleteBook(bookId);
 
-      setBooks((previousBooks) =>
-        previousBooks.filter((book) => book._id !== bookId)
+      setBooks((prevBooks) =>
+        prevBooks.filter((book) => book._id !== bookId)
       );
     } catch (err) {
-      console.error('Failed to delete listing:', err);
+      console.error('[MyListings] Delete failed:', err);
 
       setError(
         err.response?.data?.message ||
-          err.message ||
-          'Unable to delete the book listing.'
+        err.message ||
+        'Unable to delete the book listing.'
       );
     } finally {
       setActionLoading('');
@@ -86,7 +76,7 @@ const MyListingsPage = () => {
       setError('');
 
       const response = await bookService.updateBookStatus(bookId, status);
-      const updatedBook = response.data;
+      const updatedBook = response.data?.data ?? response.data;
 
       setBooks((previousBooks) =>
         previousBooks.map((book) =>
@@ -96,12 +86,12 @@ const MyListingsPage = () => {
         )
       );
     } catch (err) {
-      console.error('Failed to update listing status:', err);
+      console.error('[MyListings] Status update failed:', err);
 
       setError(
         err.response?.data?.message ||
-          err.message ||
-          'Unable to update listing status.'
+        err.message ||
+        'Unable to update listing status.'
       );
     } finally {
       setActionLoading('');
@@ -193,26 +183,23 @@ const MyListingsPage = () => {
         {books.length === 1 ? 'book' : 'books'} listed by you
       </div>
 
-      {books.length === 0 ? (
+      {error && (
         <div
-          className="paper-card"
-          style={{ padding: '2rem', textAlign: 'center' }}
+          className="bb-alert bb-alert--error"
+          style={{ marginBottom: '1.5rem' }}
         >
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-            📚
-          </div>
-
-          <h2>Your Book Shelf is Empty</h2>
-
-          <p className="text-muted">
-            You haven't listed any books yet. Add your first book and
-            start sharing it with your campus community.
-          </p>
-
-          <Link to="/books/add" style={{ textDecoration: 'none' }}>
-            <Button variant="primary">List Your First Book</Button>
-          </Link>
+          {error}
         </div>
+      )}
+
+      {books.length === 0 ? (
+        <EmptyState
+          icon="📖"
+          title="Your Shelf is Empty"
+          description="You have not listed any books yet. Add your first book to start sharing with your campus peers!"
+          actionLabel="List a Book Now"
+          onAction={() => navigate('/books/add')}
+        />
       ) : (
         <div className="grid-3">
           {books.map((book) => (
@@ -236,11 +223,11 @@ const MyListingsPage = () => {
                     htmlFor={`status-${book._id}`}
                     style={{
                       display: 'block',
-                      marginTop: '0.75rem',
+                      fontWeight: '600',
                       marginBottom: '0.35rem',
                     }}
                   >
-                    Change status
+                    Listing Status
                   </label>
 
                   <select
@@ -275,7 +262,9 @@ const MyListingsPage = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => navigate(`/books/${book._id}/edit`)}
+                    onClick={() =>
+                      navigate(`/books/${book._id}/edit`)
+                    }
                   >
                     Edit Listing
                   </Button>
@@ -283,12 +272,14 @@ const MyListingsPage = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleDelete(book._id)}
-                    disabled={actionLoading === `delete-${book._id}`}
+                    onClick={() =>
+                      handleDelete(book._id)
+                    }
+                    isLoading={
+                      actionLoading === `delete-${book._id}`
+                    }
                   >
-                    {actionLoading === `delete-${book._id}`
-                      ? 'Deleting...'
-                      : 'Delete Listing'}
+                    Delete Listing
                   </Button>
                 </div>
               </section>

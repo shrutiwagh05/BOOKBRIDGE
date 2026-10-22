@@ -60,7 +60,7 @@ const DiscoveryPage = () => {
       if (listingType)        params.type = listingType;
 
       const res = await bookService.getBooks(params);
-      let data = res.data || [];
+      let data = res.data?.data ?? res.data ?? [];
 
       /* Client-side condition filter (no backend field for it yet) */
       if (condition) {

@@ -6,10 +6,12 @@
 const getBooks = async (req, res, next) => {
   try {
     const { category, type, search, sort, limit } = req.query;
-
+    
     const filter = {
       status: 'available',
     };
+
+
 
     if (category) {
       filter.category = category;

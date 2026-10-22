@@ -25,7 +25,7 @@ const ProfilePage = () => {
         setError('');
 
         const response = await userService.getProfile();
-        const profileData = response.data;
+        const profileData = response.data?.data ?? response.data;
 
         setProfile(profileData.user);
 
