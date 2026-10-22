@@ -1,4 +1,4 @@
-﻿const Book = require('../models/Book');
+const Book = require('../models/Book');
 
 // @desc    Get all available books with optional search, filters, sorting and limit
 // @route   GET /api/books

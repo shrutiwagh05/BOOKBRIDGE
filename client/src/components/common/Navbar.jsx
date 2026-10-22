@@ -11,14 +11,13 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const closeMenu = () => setMobileMenuOpen(false);
-
-  const handleLogout = async () => {
-    closeMenu();
-    await logout();
-    navigate('/login');
+  const handleLogout = () => {
+    logout();
+    setMobileMenuOpen(false);
+    navigate('/');
   };
 
+  const closeMenu = () => setMobileMenuOpen(false);
   const navLinkClass = ({ isActive }) =>
     `bb-nav-link ${isActive ? 'active' : ''}`;
 
@@ -67,22 +66,20 @@ const Navbar = () => {
                 Borrow &amp; Exchange
               </NavLink>
             </li>
-
             {isAuthenticated && (
-              <>
-                <li>
-                  <NavLink to="/dashboard" className={navLinkClass} onClick={closeMenu}>
-                    Dashboard
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/profile" className={navLinkClass} onClick={closeMenu}>
-                    Profile
-                  </NavLink>
-                </li>
-              </>
+              <li>
+                <NavLink to="/dashboard" className={navLinkClass} onClick={closeMenu}>
+                  Dashboard
+                </NavLink>
+              </li>
             )}
-
+            {isAuthenticated && (
+              <li>
+                <NavLink to="/profile" className={navLinkClass} onClick={closeMenu}>
+                  Profile
+                </NavLink>
+              </li>
+            )}
             {isAuthenticated && user?.role === 'admin' && (
               <li>
                 <NavLink to="/admin" className={navLinkClass} onClick={closeMenu}>

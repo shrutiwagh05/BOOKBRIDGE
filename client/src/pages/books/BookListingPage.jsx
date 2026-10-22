@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import BookCard from '../../components/books/BookCard';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
+import ErrorAlert from '../../components/common/ErrorAlert';
 import Badge from '../../components/common/Badge';
 import bookService from '../../services/bookService';
 import { useAuth } from '../../context/AuthContext';
 
 const BookListingPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   const [books, setBooks] = useState([]);
@@ -18,59 +20,36 @@ const BookListingPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('');
 
+  // Fetch books from API endpoint with debounced search and filtering
+  const fetchCatalog = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const params = {};
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (filterType) params.type = filterType;
+
+      const res = await bookService.getBooks(params);
+      const serverBooks = res?.data || (Array.isArray(res) ? res : []);
+      setBooks(Array.isArray(serverBooks) ? serverBooks : []);
+    } catch (err) {
+      console.error('[BookListing] Failed to load catalog from API:', err);
+      setError(
+        err.message || 'Unable to retrieve catalog. Please check that the server is running.'
+      );
+      setBooks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, filterType]);
+
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchBooks = async () => {
-      try {
-        setLoading(true);
-        setError('');
-
-        const res = await bookService.getBooks();
-        const serverBooks = res.data || [];
-
-        if (isMounted) {
-          setBooks(Array.isArray(serverBooks) ? serverBooks : []);
-        }
-      } catch (err) {
-        console.error('Failed to load book catalog:', err);
-
-        if (isMounted) {
-          setBooks([]);
-          setError(
-            'The book catalog could not be loaded. Please check your connection and try again.'
-          );
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchBooks();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-
-  const filteredBooks = books.filter((book) => {
-    const title = (book.title || '').toLowerCase();
-    const author = (book.author || '').toLowerCase();
-
-    const matchesSearch =
-      title.includes(normalizedQuery) ||
-      author.includes(normalizedQuery);
-
-    const matchesType = filterType
-      ? book.listingType === filterType
-      : true;
-
-    return matchesSearch && matchesType;
-  });
+    const timer = setTimeout(() => {
+      fetchCatalog();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [fetchCatalog]);
 
   const resetFilters = () => {
     setSearchQuery('');
@@ -89,7 +68,7 @@ const BookListingPage = () => {
 
     const userId = user._id || user.id;
 
-    return (
+    return Boolean(
       ownerId &&
       userId &&
       String(ownerId) === String(userId)
@@ -159,95 +138,82 @@ const BookListingPage = () => {
         </div>
       </section>
 
-      <section aria-live="polite">
-        {loading ? (
-          <Loader text="Loading available books..." />
-        ) : error ? (
-          <div className="paper-card" style={{ padding: '1.5rem' }}>
-            <h2>Unable to Load Books</h2>
-            <p className="text-muted">{error}</p>
+      {/* Error Alert */}
+      {error && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          <ErrorAlert message={error} onClose={() => setError('')} />
+        </div>
+      )}
 
-            <Button
-              variant="primary"
-              onClick={() => window.location.reload()}
-            >
-              Try Again
-            </Button>
+      {/* Catalog Display */}
+      {loading ? (
+        <Loader text="Loading available books..." />
+      ) : books.length === 0 ? (
+        <EmptyState
+          title={searchQuery || filterType ? 'No Books Matched' : 'No Books Listed Yet'}
+          description={
+            searchQuery || filterType
+              ? 'Try clearing your search terms or filter criteria to discover more volumes.'
+              : 'There are no book listings currently available in the catalog. Be the first to list one!'
+          }
+          actionLabel={searchQuery || filterType ? 'Reset Filters' : '+ List a Book Now'}
+          onAction={() => {
+            if (searchQuery || filterType) {
+              resetFilters();
+            } else {
+              navigate('/books/add');
+            }
+          }}
+        />
+      ) : (
+        <>
+          <div
+            className="flex-between"
+            style={{ marginBottom: '1.25rem', flexWrap: 'wrap' }}
+          >
+            <h2 style={{ margin: 0 }}>Available Listings</h2>
+
+            <span className="text-muted">
+              {books.length} {books.length === 1 ? 'book' : 'books'} found
+            </span>
           </div>
-        ) : filteredBooks.length === 0 ? (
-          <EmptyState
-            title={
-              books.length === 0
-                ? 'No Books Listed Yet'
-                : 'No Books Found'
-            }
-            description={
-              books.length === 0
-                ? 'There are no book listings available yet. You can create the first listing.'
-                : 'Try a different search or clear your filters to see more books.'
-            }
-            actionLabel={
-              books.length === 0 ? 'List a Book' : 'Clear Filters'
-            }
-            onAction={() => {
-              if (books.length === 0) {
-                window.location.assign('/books/add');
-              } else {
-                resetFilters();
-              }
-            }}
-          />
-        ) : (
-          <>
-            <div
-              className="flex-between"
-              style={{ marginBottom: '1.25rem', flexWrap: 'wrap' }}
-            >
-              <h2 style={{ margin: 0 }}>Available Listings</h2>
 
-              <span className="text-muted">
-                {filteredBooks.length}{' '}
-                {filteredBooks.length === 1 ? 'book' : 'books'} found
-              </span>
-            </div>
+          <div className="grid-3">
+            {books.map((book) => {
+              const myBook = isMyBook(book);
 
-            <div className="grid-3">
-              {filteredBooks.map((book) => {
-                const myBook = isMyBook(book);
+              return (
+                <div
+                  key={book._id || book.id}
+                  style={{ position: 'relative' }}
+                >
+                  {myBook && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '0.75rem',
+                        right: '0.75rem',
+                        zIndex: 2,
+                      }}
+                    >
+                      <Badge variant="terracotta">
+                        Your Listing
+                      </Badge>
+                    </div>
+                  )}
 
-                return (
-                  <div
-                    key={book._id}
-                    style={{ position: 'relative' }}
-                  >
-                    {myBook && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '0.75rem',
-                          right: '0.75rem',
-                          zIndex: 2,
-                        }}
-                      >
-                        <Badge variant="terracotta">
-                          Your Listing
-                        </Badge>
-                      </div>
-                    )}
-
-                    <BookCard
-                      book={book}
-                      actionLabel={
-                        myBook ? 'View Your Listing' : 'View Details'
-                      }
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </section>
+                  <BookCard
+                    book={book}
+                    actionLabel={
+                      myBook ? 'View Your Listing' : 'View Details'
+                    }
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </main>
   );
 };

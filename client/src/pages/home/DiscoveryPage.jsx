@@ -60,7 +60,7 @@ const DiscoveryPage = () => {
       if (listingType)        params.type = listingType;
 
       const res = await bookService.getBooks(params);
-      let data = res.data || [];
+      let data = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
 
       /* Client-side condition filter (no backend field for it yet) */
       if (condition) {
@@ -111,7 +111,7 @@ const DiscoveryPage = () => {
 
       {/* ── Page Header ─────────────────────────────────────── */}
       <div className="bb-discovery-header">
-        <Badge variant="terracotta">Module 1 • Discovery Archive</Badge>
+        <Badge variant="terracotta">Discovery Archive</Badge>
         <h1 style={{ marginTop: '0.5rem' }}>Discover Books</h1>
         <p className="lead text-muted">
           Search, filter and sort thousands of campus book listings — all

@@ -111,5 +111,3 @@ module.exports = {
   getUserProfile,
   updateUserProfile,
 };
-
-

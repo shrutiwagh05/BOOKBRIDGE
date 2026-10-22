@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
 import './BookCard.css';
@@ -25,6 +25,8 @@ const BookCard = ({
   actionLabel = 'View Details',
   className = '',
 }) => {
+  const navigate = useNavigate();
+
   if (!book) return null;
 
   const {
@@ -40,16 +42,24 @@ const BookCard = ({
     locationCollege = '',
   } = book;
 
+  const bookId = _id || book.id;
+  const coverImage = image || (Array.isArray(book.images) && book.images[0] ? book.images[0] : '');
+
+  const handleActionClick = (e) => {
+    e.stopPropagation();
+    if (onAction) {
+      onAction(book);
+    } else if (bookId) {
+      navigate(`/books/${bookId}`);
+    }
+  };
+
   return (
     <div className={`bb-book-card ${className}`}>
       {/* Book Cover Area */}
       <div className="bb-book-card-cover">
-        {(image || book.images?.[0]) ? (
-          <img
-            src={image || book.images?.[0]}
-            alt={title}
-            className="bb-book-cover-img"
-          />
+        {coverImage ? (
+          <img src={coverImage} alt={title} className="bb-book-cover-img" />
         ) : (
           <div className="bb-book-cover-placeholder">
             <span className="bb-book-spine-line"></span>
@@ -79,11 +89,8 @@ const BookCard = ({
           {category}
         </span>
 
-        <h3
-          className="bb-book-title"
-          title={title}
-        >
-          <Link to={`/books/${_id || 'preview'}`}>
+        <h3 className="bb-book-title" title={title}>
+          <Link to={bookId ? `/books/${bookId}` : '#'}>
             {title}
           </Link>
         </h3>
@@ -123,21 +130,13 @@ const BookCard = ({
           </div>
 
           <div className="bb-book-card-actions">
-            {onAction ? (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onAction(book)}
-              >
-                {actionLabel}
-              </Button>
-            ) : (
-              <Link to={`/books/${_id || 'preview'}`}>
-                <Button size="sm" variant="primary">
-                  {actionLabel}
-                </Button>
-              </Link>
-            )}
+            <Button
+              size="sm"
+              variant={onAction ? 'outline' : 'primary'}
+              onClick={handleActionClick}
+            >
+              {actionLabel}
+            </Button>
           </div>
         </div>
       </div>
