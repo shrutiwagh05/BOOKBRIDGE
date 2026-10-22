@@ -13,9 +13,15 @@ connectDB();
 
 const app = express();
 
-// Middlewares: Flexible CORS configuration supporting Vercel deployments & localhost
+// CORS: allow the configured frontend and explicitly approved development/preview origins.
+const extraAllowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  ...extraAllowedOrigins,
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000',
@@ -24,23 +30,25 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow requests with no origin (e.g. curl, postman, mobile apps, server-to-server)
+      // Requests without an Origin header (e.g. curl, Postman, server-to-server) are allowed.
       if (!origin) return callback(null, true);
-      try {
-        const url = new URL(origin);
-        if (
-          allowedOrigins.includes(origin) ||
-          url.hostname.endsWith('.vercel.app') ||
-          url.hostname === 'localhost' ||
-          url.hostname === '127.0.0.1' ||
-          process.env.NODE_ENV !== 'production'
-        ) {
-          return callback(null, true);
-        }
-      } catch (e) {
-        // Fallback to allowing if invalid URL parser
+
+      if (
+        allowedOrigins.includes(origin) ||
+        (process.env.NODE_ENV !== 'production' &&
+          (() => {
+            try {
+              const url = new URL(origin);
+              return url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+            } catch {
+              return false;
+            }
+          })())
+      ) {
+        return callback(null, true);
       }
-      return callback(null, true);
+
+      return callback(new Error('Origin not allowed by CORS'));
     },
     credentials: true,
   })
