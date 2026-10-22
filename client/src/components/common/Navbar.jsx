@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -100,9 +101,7 @@ const Navbar = () => {
                 <div className="bb-user-info">
                   <span className="bb-user-name">{user?.name || 'Student'}</span>
                   {user?.role === 'admin' && (
-                    <Badge variant="terracotta" size="sm">
-                      Admin
-                    </Badge>
+                    <Badge variant="terracotta" size="sm">Admin</Badge>
                   )}
                 </div>
 
@@ -113,14 +112,10 @@ const Navbar = () => {
             ) : (
               <div className="bb-auth-buttons">
                 <Link to="/login" onClick={closeMenu}>
-                  <Button size="sm" variant="outline">
-                    Sign In
-                  </Button>
+                  <Button size="sm" variant="outline">Sign In</Button>
                 </Link>
                 <Link to="/register" onClick={closeMenu}>
-                  <Button size="sm" variant="primary">
-                    Join Library
-                  </Button>
+                  <Button size="sm" variant="primary">Join Library</Button>
                 </Link>
               </div>
             )}
