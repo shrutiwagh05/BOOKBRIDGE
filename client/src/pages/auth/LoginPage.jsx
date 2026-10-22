@@ -84,7 +84,6 @@ const LoginPage = () => {
         </form>
 
         <div className="bb-auth-footer">
-          <p className="text-small"><Link to="/forgot-password" className="bb-auth-link">Forgot password?</Link></p>
           <p className="text-small text-muted">
             New to the campus library?{' '}
             <Link to="/register" className="bb-auth-link">
