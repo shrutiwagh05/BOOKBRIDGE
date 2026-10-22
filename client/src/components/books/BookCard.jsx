@@ -1,4 +1,5 @@
-﻿import React from 'react';
+﻿
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
@@ -11,6 +12,7 @@ const BookCard = ({
   showActions = true,
 }) => {
   const navigate = useNavigate();
+  const [imageError, setImageError] = useState(false);
 
   if (!book) {
     return null;
@@ -23,7 +25,6 @@ const BookCard = ({
     price,
     condition,
     listingType,
-    image,
     status,
     locationCollege,
     category,
@@ -31,27 +32,31 @@ const BookCard = ({
 
   const bookId = _id || book.id;
 
-  const coverImage =
-    image ||
-    (Array.isArray(book.images) && book.images.length > 0
-      ? book.images[0]
-      : '');
+  // Support different image fields returned by the backend.
+  const rawCoverImage =
+    book.image ||
+    book.imageUrl ||
+    book.coverImage ||
+    book.coverImageUrl ||
+    (Array.isArray(book.images) ? book.images[0] : '') ||
+    '';
 
-  // Build the backend URL for uploaded book images.
-  const apiBaseUrl =
+  // Resolve uploaded image paths to the backend server.
+  const apiBaseUrl = (
     import.meta.env.VITE_API_URL ||
-    'https://bookbridge-s1mx.onrender.com/api';
+    'https://bookbridge-s1mx.onrender.com/api'
+  ).replace(/\/+$/, '');
 
-  const backendUrl = apiBaseUrl.replace(/\/api\/?$/, '');
+  const backendUrl = apiBaseUrl.replace(/\/api$/, '');
 
-  let coverImageUrl = coverImage;
-
-  if (
-    typeof coverImage === 'string' &&
-    coverImage.startsWith('/uploads/')
-  ) {
-    coverImageUrl = backendUrl + coverImage;
-  }
+  const coverImageUrl =
+    typeof rawCoverImage === 'string' && rawCoverImage.trim()
+      ? rawCoverImage.startsWith('/uploads/')
+        ? `${backendUrl}${rawCoverImage}`
+        : rawCoverImage.startsWith('uploads/')
+          ? `${backendUrl}/${rawCoverImage}`
+          : rawCoverImage
+      : '';
 
   const handleActionClick = (event) => {
     event.stopPropagation();
@@ -81,13 +86,13 @@ const BookCard = ({
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
-      {/* Book Cover Area */}
       <div className="bb-book-card-cover">
-        {coverImageUrl ? (
+        {coverImageUrl && !imageError ? (
           <img
             src={coverImageUrl}
             alt={title || 'Book cover'}
             className="bb-book-cover-img"
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="bb-book-cover-placeholder">
@@ -99,7 +104,6 @@ const BookCard = ({
           </div>
         )}
 
-        {/* Listing Type and Status Badges */}
         <div className="bb-book-card-badges">
           {listingType && (
             <Badge variant="primary">
@@ -115,7 +119,6 @@ const BookCard = ({
         </div>
       </div>
 
-      {/* Book Information */}
       <div className="bb-book-card-content">
         <div className="bb-book-card-header">
           <h3 className="bb-book-card-title">
