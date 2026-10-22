@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Badge from '../common/Badge';
@@ -40,13 +41,27 @@ const BookCard = ({
     locationCollege = '',
   } = book;
 
+  // Support both image and images fields.
+  const imagePath = image || book.images?.[0] || '';
+
+  // Resolve uploaded images to the backend hosting BookBridge.
+  const apiBaseUrl =
+    import.meta.env.VITE_API_URL ||
+    'https://bookbridge-s1mx.onrender.com/api';
+
+  const backendUrl = apiBaseUrl.replace(/\/api\/?$/, '');
+
+  const imageUrl = imagePath.startsWith('/uploads/')
+    ? `${backendUrl}${imagePath}`
+    : imagePath;
+
   return (
     <div className={`bb-book-card ${className}`}>
       {/* Book Cover Area */}
       <div className="bb-book-card-cover">
-        {(image || book.images?.[0]) ? (
+        {imageUrl ? (
           <img
-            src={image || book.images?.[0]}
+            src={imageUrl}
             alt={title}
             className="bb-book-cover-img"
           />
