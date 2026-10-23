@@ -1,5 +1,4 @@
-﻿
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
@@ -44,17 +43,17 @@ const getCoverImageUrl = (book) => {
     return image.startsWith('//') ? `https:${image}` : image;
   }
 
-  // Resolve API paths against the backend origin.
-if (image.startsWith('/api/')) {
-  return `${BACKEND_URL}${image}`;
-}
+  // Resolve API paths against the backend origin
+  if (image.startsWith('/api/')) {
+    return `${BACKEND_URL}${image}`;
+  }
 
-// Convert legacy /uploads paths into backend image URLs.
-const normalizedPath = image
-  .replace(/\\/g, '/')
-  .replace(/^\/+/, '');
+  // Convert legacy /uploads paths into backend image URLs
+  const normalizedPath = image
+    .replace(/\\/g, '/')
+    .replace(/^\/+/, '');
 
-return `${BACKEND_URL}/${normalizedPath}`;
+  return `${BACKEND_URL}/${normalizedPath}`;
 };
 
 const BookCard = ({
@@ -66,15 +65,13 @@ const BookCard = ({
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
 
-  // Calculate the image URL safely.
-const coverImageUrl = getCoverImageUrl(book);
+  const coverImageUrl = getCoverImageUrl(book);
 
   // Reset the image fallback when the cover changes
   useEffect(() => {
     setImageError(false);
   }, [coverImageUrl]);
 
-  // Do not render a card when book data is missing
   if (!book) {
     return null;
   }
@@ -121,6 +118,7 @@ const coverImageUrl = getCoverImageUrl(book);
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
+      {/* Existing book-cover rendering */}
       <div className="bb-book-card-cover">
         {coverImageUrl && !imageError ? (
           <img
@@ -155,46 +153,65 @@ const coverImageUrl = getCoverImageUrl(book);
         </div>
       </div>
 
-      <div className="bb-book-card-content">
-        <div className="bb-book-card-header">
-          <h3 className="bb-book-card-title">
+      {/* Book information: class names match BookCard.css */}
+      <div className="bb-book-card-body">
+        {category && (
+          <span className="bb-book-category">
+            {category}
+          </span>
+        )}
+
+        <h3
+          className="bb-book-title"
+          title={title || 'Untitled Book'}
+        >
+          <Link
+            to={'/books/' + (bookId || 'preview')}
+            onClick={(event) => event.stopPropagation()}
+          >
             {title || 'Untitled Book'}
-          </h3>
+          </Link>
+        </h3>
 
-          <p className="bb-book-card-author">
-            by {author || 'Unknown Author'}
-          </p>
-        </div>
+        <p className="bb-book-author">
+          by {author || 'Unknown Author'}
+        </p>
 
-        <div className="bb-book-card-details">
-          {category && (
-            <span className="bb-book-card-category">
-              {category}
-            </span>
-          )}
-
-          {condition && (
-            <span className="bb-book-card-condition">
+        {condition && (
+          <div className="bb-book-condition">
+            <Badge variant="secondary">
               {condition}
-            </span>
-          )}
-        </div>
-
-        {locationCollege && (
-          <div className="bb-book-card-location">
-            <span>📍</span>
-            <span>{locationCollege}</span>
+            </Badge>
           </div>
         )}
 
+        {locationCollege && (
+          <p className="bb-book-location">
+            <span>📍</span> {locationCollege}
+          </p>
+        )}
+
+        {/* Price and listing information */}
         <div className="bb-book-card-footer">
-          <div className="bb-book-card-price">
-            {price !== undefined &&
-            price !== null &&
-            price !== '' ? (
-              <span>₹{price}</span>
+          <div className="bb-book-price-block">
+            {listingType === 'Borrow' ? (
+              <span className="bb-book-borrow-note">
+                Lend / Borrow
+              </span>
+            ) : listingType === 'Exchange' ? (
+              <span className="bb-book-exchange-note">
+                Exchange Offer
+              </span>
+            ) : price !== undefined &&
+              price !== null &&
+              price !== '' ? (
+              <span className="bb-book-price">
+                ₹{price}
+              </span>
             ) : (
-              <span>Contact for price</span>
+              <span className="bb-book-price">
+                Contact for price
+              </span>
             )}
           </div>
 
@@ -210,7 +227,7 @@ const coverImageUrl = getCoverImageUrl(book);
                 </Button>
               ) : (
                 <Link
-                  to={'/books/' + bookId}
+                  to={'/books/' + (bookId || 'preview')}
                   onClick={(event) => event.stopPropagation()}
                   className="bb-book-card-view-link"
                 >

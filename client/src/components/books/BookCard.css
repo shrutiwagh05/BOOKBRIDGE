@@ -1,173 +1,362 @@
+/* ==========================================
+   BOOKBRIDGE — BOOK CARD STYLES
+   Existing warm brown / terracotta theme
+   ========================================== */
+
 .bb-book-card {
   display: flex;
   flex-direction: column;
-  background-color: var(--color-warm-ivory);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
+  min-width: 0;
+  height: 100%;
   overflow: hidden;
-  box-shadow: var(--shadow-paper);
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-  position: relative;
+  background: var(--color-warm-ivory, #fffaf2);
+  border: 1px solid var(--color-border, #e6d8c8);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 3px 12px rgba(65, 43, 30, 0.08);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .bb-book-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-elevated);
-  border-color: rgba(166, 83, 53, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(65, 43, 30, 0.14);
 }
 
-/* Cover Styling */
+/* ------------------------------------------
+   BOOK COVER
+   Preserve the existing cover image display
+   ------------------------------------------ */
+
 .bb-book-card-cover {
   position: relative;
-  height: 210px;
-  background-color: var(--color-paper-dark);
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 210px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #f2e8d9;
 }
 
 .bb-book-cover-img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.25s ease;
 }
 
 .bb-book-card:hover .bb-book-cover-img {
-  transform: scale(1.03);
+  transform: scale(1.025);
 }
 
-/* Vintage Paper Placeholder Cover */
+/* ------------------------------------------
+   NO-COVER PLACEHOLDER
+   ------------------------------------------ */
+
 .bb-book-cover-placeholder {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #f2e5d3 0%, #e5d2bc 100%);
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-md);
-  position: relative;
-  box-shadow: inset 0 0 16px rgba(90, 56, 37, 0.08);
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  background: linear-gradient(145deg, #f7eddf, #ead8c3);
+  color: #795640;
+  text-align: center;
 }
 
 .bb-book-spine-line {
   position: absolute;
-  left: 12px;
   top: 0;
   bottom: 0;
-  width: 2px;
-  background: rgba(90, 56, 37, 0.2);
-  border-right: 1px solid rgba(255, 255, 255, 0.4);
+  left: 18px;
+  width: 3px;
+  background: rgba(107, 70, 54, 0.12);
 }
 
 .bb-book-placeholder-inner {
-  text-align: center;
-  max-width: 80%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .bb-book-placeholder-icon {
-  font-size: 2rem;
-  display: block;
-  margin-bottom: var(--space-xs);
-  opacity: 0.85;
+  font-size: 2.8rem;
+  line-height: 1;
 }
 
+.bb-book-placeholder-text,
 .bb-book-placeholder-title {
-  font-family: var(--font-heading);
-  font-size: 0.95rem;
-  color: var(--color-deep-brown);
+  max-width: 90%;
+  overflow-wrap: anywhere;
+  font-size: 0.85rem;
   font-weight: 600;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  color: #795640;
 }
 
-/* Floating Badges */
+/* ------------------------------------------
+   TOP LISTING BADGES
+   White background with existing theme brown
+   ------------------------------------------ */
+
 .bb-book-card-badges {
   position: absolute;
   top: 10px;
   right: 10px;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
   align-items: flex-end;
+  gap: 6px;
+  max-width: calc(100% - 20px);
 }
 
-/* Card Body */
+.bb-book-card-badges > * {
+  max-width: 100%;
+  background-color: #ffffff;
+  color: var(--color-terracotta, #8a4f38);
+  border: 1px solid var(--color-terracotta, #8a4f38);
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------
+   CARD CONTENT
+   ------------------------------------------ */
+
 .bb-book-card-body {
-  padding: var(--space-md);
   display: flex;
+  flex: 1;
   flex-direction: column;
-  flex-grow: 1;
+  min-width: 0;
+  padding: 16px;
 }
 
 .bb-book-category {
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
+  display: inline-block;
+  align-self: flex-start;
+  max-width: 100%;
+  margin-bottom: 8px;
+  color: #896f5b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  line-height: 1.4;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-muted-taupe);
-  margin-bottom: 4px;
+  overflow-wrap: anywhere;
 }
 
+/* ------------------------------------------
+   BOOK TITLE
+   ------------------------------------------ */
+
 .bb-book-title {
-  font-size: 1.15rem;
-  margin: 0 0 4px 0;
-  line-height: 1.3;
+  margin: 0 0 5px;
+  color: #4e3327;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .bb-book-title a {
-  color: var(--color-ink-black);
+  color: inherit;
   text-decoration: none;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .bb-book-title a:hover {
-  color: var(--color-terracotta);
+  color: var(--color-terracotta, #8a4f38);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
+
+/* ------------------------------------------
+   AUTHOR
+   ------------------------------------------ */
 
 .bb-book-author {
-  font-family: var(--font-body);
+  margin: 0 0 10px;
+  color: #806b5b;
+  font-size: 0.88rem;
   font-style: italic;
-  font-size: 0.9rem;
-  color: var(--color-deep-brown);
-  margin: 0 0 var(--space-xs) 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
+
+/* ------------------------------------------
+   BOOK CONDITION
+   ------------------------------------------ */
+
+.bb-book-condition {
+  display: flex;
+  align-items: center;
+  align-self: flex-start;
+  max-width: 100%;
+  margin: 0 0 10px;
+}
+
+.bb-book-condition > * {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------
+   LOCATION
+   ------------------------------------------ */
 
 .bb-book-location {
-  font-family: var(--font-sans);
-  font-size: 0.8rem;
-  color: var(--color-muted-taupe);
-  margin: 0 0 var(--space-md) 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 0 0 12px;
+  color: #806b5b;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
-/* Footer Section */
+.bb-book-location span {
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------
+   PRICE AND LISTING INFORMATION
+   ------------------------------------------ */
+
 .bb-book-card-footer {
-  margin-top: auto;
-  padding-top: var(--space-sm);
-  border-top: 1px dashed var(--color-border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-sm);
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px dashed #ddcbb8;
+}
+
+.bb-book-price-block {
+  display: flex;
+  flex: 1 1 90px;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .bb-book-price {
-  font-family: var(--font-heading);
+  color: var(--color-terracotta, #8a4f38);
   font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--color-terracotta);
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .bb-book-borrow-note,
 .bb-book-exchange-note {
-  font-family: var(--font-sans);
+  color: var(--color-terracotta, #8a4f38);
   font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-deep-brown);
+  font-weight: 700;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------
+   VIEW DETAILS BUTTON
+   Filled with the existing theme brown
+   White text
+   ------------------------------------------ */
+
+.bb-book-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.bb-book-card-view-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 13px;
+  border: 1px solid var(--color-terracotta, #8a4f38);
+  border-radius: var(--radius-md, 8px);
+  background-color: var(--color-terracotta, #8a4f38);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+.bb-book-card-view-link:hover,
+.bb-book-card-view-link:focus-visible {
+  background-color: var(--color-terracotta, #8a4f38);
+  border-color: var(--color-terracotta, #8a4f38);
+  color: #ffffff;
+}
+
+.bb-book-card-view-link:focus-visible {
+  outline: 2px solid var(--color-terracotta, #8a4f38);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------
+   RESPONSIVE LAYOUT
+   ------------------------------------------ */
+
+@media (max-width: 480px) {
+  .bb-book-card-cover {
+    height: 190px;
+  }
+
+  .bb-book-card-body {
+    padding: 13px;
+  }
+
+  .bb-book-title {
+    font-size: 1rem;
+  }
+
+  .bb-book-card-footer {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .bb-book-card-actions {
+    max-width: 100%;
+  }
+
+  .bb-book-card-view-link {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+}
+/* My Listings only: remove unnecessary space inside book cards */
+.my-listing-cell {
+  align-self: start;
+  min-width: 0;
+}
+
+.my-listing-cell .bb-book-card {
+  height: auto;
+  min-height: 0;
+  align-self: start;
+}
+
+.my-listing-cell .bb-book-card .bb-book-card-body {
+  flex: 0 1 auto;
+}
+
+.my-listing-cell .bb-book-card .bb-book-card-footer {
+  margin-top: 0.75rem;
 }
