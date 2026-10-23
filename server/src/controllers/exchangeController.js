@@ -35,6 +35,10 @@ const getIncomingRequests = async (req, res, next) => {
       .populate('requester', 'name email college department rating')
       .sort({ createdAt: -1 });
 
+    console.info('[Incoming Requests Diagnostic]', {
+      authenticatedUserId: req.user._id.toString(),
+      returnedCount: requests.length,
+    });
     res.status(200).json({ success: true, count: requests.length, data: requests });
   } catch (error) {
     next(error);
@@ -144,6 +148,15 @@ const createExchangeRequest = async (req, res, next) => {
       durationDays: validation.value.durationDays,
       message: validation.value.message,
       status: 'pending',
+    });
+
+    console.info('[Exchange Request Created Diagnostic]', {
+      requestId: exchange._id.toString(),
+      bookId: book._id.toString(),
+      bookTitle: book.title,
+      storedOwnerId: exchange.owner.toString(),
+      authenticatedRequesterId: req.user._id.toString(),
+      requestType,
     });
 
     // Create notification for book owner
