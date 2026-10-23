@@ -1,9 +1,61 @@
 ﻿
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
 import './BookCard.css';
+
+// Backend API URL
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? '/api' : 'https://bookbridge-s1mx.onrender.com/api')
+).replace(/\/+$/, '');
+
+// Remove /api to get the backend server URL
+const BACKEND_URL = API_BASE_URL.replace(/\/api$/i, '');
+
+// Convert the saved book image path into a usable image URL
+const getCoverImageUrl = (book) => {
+  if (!book) return '';
+
+  const imageFields = [
+    book.image,
+    book.imageUrl,
+    book.coverImage,
+    book.coverImageUrl,
+    Array.isArray(book.images) ? book.images[0] : '',
+  ];
+
+  let image = imageFields.find((item) => item);
+
+  // Support APIs that return an image object
+  if (image && typeof image === 'object') {
+    image = image.url || image.secure_url || image.path || '';
+  }
+
+  if (typeof image !== 'string' || !image.trim()) {
+    return '';
+  }
+
+  image = image.trim();
+
+  // Keep complete URLs and embedded image data unchanged
+  if (/^(https?:)?\/\//i.test(image) || image.startsWith('data:')) {
+    return image.startsWith('//') ? `https:${image}` : image;
+  }
+
+  // Resolve API paths against the backend origin.
+if (image.startsWith('/api/')) {
+  return `${BACKEND_URL}${image}`;
+}
+
+// Convert legacy /uploads paths into backend image URLs.
+const normalizedPath = image
+  .replace(/\\/g, '/')
+  .replace(/^\/+/, '');
+
+return `${BACKEND_URL}/${normalizedPath}`;
+};
 
 const BookCard = ({
   book,
@@ -14,6 +66,15 @@ const BookCard = ({
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
 
+  // Calculate the image URL safely.
+const coverImageUrl = getCoverImageUrl(book);
+
+  // Reset the image fallback when the cover changes
+  useEffect(() => {
+    setImageError(false);
+  }, [coverImageUrl]);
+
+  // Do not render a card when book data is missing
   if (!book) {
     return null;
   }
@@ -31,32 +92,6 @@ const BookCard = ({
   } = book;
 
   const bookId = _id || book.id;
-
-  // Support different image fields returned by the backend.
-  const rawCoverImage =
-    book.image ||
-    book.imageUrl ||
-    book.coverImage ||
-    book.coverImageUrl ||
-    (Array.isArray(book.images) ? book.images[0] : '') ||
-    '';
-
-  // Resolve uploaded image paths to the backend server.
-  const apiBaseUrl = (
-    import.meta.env.VITE_API_URL ||
-    'https://bookbridge-s1mx.onrender.com/api'
-  ).replace(/\/+$/, '');
-
-  const backendUrl = apiBaseUrl.replace(/\/api$/, '');
-
-  const coverImageUrl =
-    typeof rawCoverImage === 'string' && rawCoverImage.trim()
-      ? rawCoverImage.startsWith('/uploads/')
-        ? `${backendUrl}${rawCoverImage}`
-        : rawCoverImage.startsWith('uploads/')
-          ? `${backendUrl}/${rawCoverImage}`
-          : rawCoverImage
-      : '';
 
   const handleActionClick = (event) => {
     event.stopPropagation();
@@ -90,8 +125,9 @@ const BookCard = ({
         {coverImageUrl && !imageError ? (
           <img
             src={coverImageUrl}
-            alt={title || 'Book cover'}
+            alt={`${title || 'Book'} cover`}
             className="bb-book-cover-img"
+            loading="lazy"
             onError={() => setImageError(true)}
           />
         ) : (

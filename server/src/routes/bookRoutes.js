@@ -1,9 +1,11 @@
-﻿const express = require('express');
+﻿
+const express = require('express');
 const router = express.Router();
 
 const {
   getBooks,
   getBookById,
+  getBookCover,
   createBook,
   getMyListings,
   updateBook,
@@ -14,22 +16,18 @@ const {
 const { protect } = require('../middlewares/authMiddleware');
 const upload = require('../middlewares/uploadMiddleware');
 
-router.route('/')
-  .get(getBooks)
-  .post(protect, upload.single('image'), createBook);
+// Public routes
+router.get('/', getBooks);
 
-// My listed books
-router.route('/my-listings')
-  .get(protect, getMyListings);
+// Specific GET routes must come before the general /:id route.
+router.get('/my-listings', protect, getMyListings);
+router.get('/:id/cover', getBookCover);
+router.get('/:id', getBookById);
 
-// Update listing status
-router.route('/:id/status')
-  .patch(protect, updateBookStatus);
-
-// Edit or delete own listing
-router.route('/:id')
-  .get(getBookById)
-  .put(protect, upload.single('image'), updateBook)
-  .delete(protect, deleteBook);
+// Protected routes
+router.post('/', protect, upload.single('image'), createBook);
+router.patch('/:id/status', protect, updateBookStatus);
+router.put('/:id', protect, upload.single('image'), updateBook);
+router.delete('/:id', protect, deleteBook);
 
 module.exports = router;
