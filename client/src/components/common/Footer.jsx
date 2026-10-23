@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './Footer.css';
@@ -39,7 +38,7 @@ const Footer = () => {
             <ul className="bb-footer-links">
               <li><Link to="/dashboard">Dashboard</Link></li>
               <li><Link to="/my-listings">My Listings</Link></li>
-              <li><Link to="/requests">My Requests</Link></li>
+              <li><Link to="/exchange/requests">My Requests</Link></li>
               <li><Link to="/notifications">Notifications</Link></li>
             </ul>
           </div>
