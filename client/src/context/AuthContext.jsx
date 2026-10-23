@@ -46,9 +46,9 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login({ email, password });
       const { token: receivedToken, ...userData } = unwrapResponse(response);
 
-      if (!receivedToken) {
-        throw new Error('Login response did not include an authentication token.');
-      }
+if (!receivedToken) {
+  throw new Error('Login response did not include an authentication token.');
+}
 
       localStorage.setItem('bookbridge_token', receivedToken);
       setToken(receivedToken);
@@ -70,9 +70,9 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.register(userData);
       const { token: receivedToken, ...createdUser } = unwrapResponse(response);
 
-      if (!receivedToken) {
-        throw new Error('Registration response did not include an authentication token.');
-      }
+if (!receivedToken) {
+  throw new Error('Registration response did not include an authentication token.');
+}
 
       localStorage.setItem('bookbridge_token', receivedToken);
       setToken(receivedToken);

@@ -1,0 +1,11 @@
+{
+  "buildCommand": "npm --prefix client run build",
+  "outputDirectory": "client/dist",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

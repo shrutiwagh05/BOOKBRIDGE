@@ -1,5 +1,6 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
 import './BookCard.css';
@@ -10,45 +11,99 @@ import './BookCard.css';
 const BookCard = ({
   book,
   onAction,
-  actionLabel = 'View Details',
-  className = '',
+  actionLabel,
+  showActions = true,
 }) => {
-  if (!book) return null;
+  const navigate = useNavigate();
+  const [imageError, setImageError] = useState(false);
+
+  if (!book) {
+    return null;
+  }
 
   const {
     _id,
-    title = 'Untitled Book',
-    author = 'Unknown Author',
-    isbn = '',
-    listingType = 'Sell',
-    price = 0,
-    condition = 'Good',
-    category = 'General',
-    image = '',
-    locationCollege = '',
+    title,
+    author,
+    price,
+    condition,
+    listingType,
+    status,
+    locationCollege,
+    category,
   } = book;
 
-  const coverImage = image || book.images?.[0] || '';
+  const bookId = _id || book.id;
+
+  // Support different image fields returned by the backend.
+  const rawCoverImage =
+    book.image ||
+    book.imageUrl ||
+    book.coverImage ||
+    book.coverImageUrl ||
+    (Array.isArray(book.images) ? book.images[0] : '') ||
+    '';
+
+  // Resolve uploaded image paths to the backend server.
+  const apiBaseUrl = (
+    import.meta.env.VITE_API_URL ||
+    'https://bookbridge-s1mx.onrender.com/api'
+  ).replace(/\/+$/, '');
+
+  const backendUrl = apiBaseUrl.replace(/\/api$/, '');
+
+  const coverImageUrl =
+    typeof rawCoverImage === 'string' && rawCoverImage.trim()
+      ? rawCoverImage.startsWith('/uploads/')
+        ? `${backendUrl}${rawCoverImage}`
+        : rawCoverImage.startsWith('uploads/')
+          ? `${backendUrl}/${rawCoverImage}`
+          : rawCoverImage
+      : '';
+
+  const handleActionClick = (event) => {
+    event.stopPropagation();
+
+    if (onAction) {
+      onAction(book);
+    }
+  };
+
+  const handleCardClick = () => {
+    if (bookId) {
+      navigate('/books/' + bookId);
+    }
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      handleCardClick();
+    }
+  };
 
   return (
-    <div className={`bb-book-card ${className}`}>
-      {/* Book Cover Area */}
+    <div
+      className="bb-book-card"
+      onClick={handleCardClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
       <div className="bb-book-card-cover">
-        {coverImage ? (
+        {coverImageUrl && !imageError ? (
           <img
-            src={coverImage}
-            alt={title}
+            src={coverImageUrl}
+            alt={title || 'Book cover'}
             className="bb-book-cover-img"
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="bb-book-cover-placeholder">
             <span className="bb-book-spine-line"></span>
-
             <div className="bb-book-placeholder-inner">
               <span className="bb-book-placeholder-icon">
                 📖
               </span>
-
               <span className="bb-book-placeholder-title">
                 {title}
               </span>
@@ -57,82 +112,84 @@ const BookCard = ({
         )}
 
         <div className="bb-book-card-badges">
-          <Badge variant={listingType}>
-            {listingType}
-          </Badge>
+          {listingType && (
+            <Badge variant="primary">
+              {listingType}
+            </Badge>
+          )}
 
-          <Badge variant={condition}>
-            {condition}
-          </Badge>
+          {status && status !== 'available' && (
+            <Badge variant="secondary">
+              {status}
+            </Badge>
+          )}
         </div>
       </div>
 
-      {/* Book Information */}
-      <div className="bb-book-card-body">
-        <span className="bb-book-category">
-          {category}
-        </span>
+      <div className="bb-book-card-content">
+        <div className="bb-book-card-header">
+          <h3 className="bb-book-card-title">
+            {title || 'Untitled Book'}
+          </h3>
 
-        <h3
-          className="bb-book-title"
-          title={title}
-        >
-          <Link to={`/books/${_id || 'preview'}`}>
-            {title}
-          </Link>
-        </h3>
-
-        <p className="bb-book-author">
-          by {author}
-        </p>
-
-        {isbn && (
-          <p className="bb-book-isbn">
-            <strong>ISBN:</strong> {isbn}
+          <p className="bb-book-card-author">
+            by {author || 'Unknown Author'}
           </p>
-        )}
+        </div>
+
+        <div className="bb-book-card-details">
+          {category && (
+            <span className="bb-book-card-category">
+              {category}
+            </span>
+          )}
+
+          {condition && (
+            <span className="bb-book-card-condition">
+              {condition}
+            </span>
+          )}
+        </div>
 
         {locationCollege && (
-          <p className="bb-book-location">
-            <span>📍</span> {locationCollege}
-          </p>
+          <div className="bb-book-card-location">
+            <span>📍</span>
+            <span>{locationCollege}</span>
+          </div>
         )}
 
-        {/* Pricing / Listing Type Details */}
         <div className="bb-book-card-footer">
-          <div className="bb-book-price-block">
-            {listingType === 'Sell' ? (
-              <span className="bb-book-price">
-                ₹{price}
-              </span>
-            ) : listingType === 'Borrow' ? (
-              <span className="bb-book-borrow-note">
-                Lend / Borrow
-              </span>
+          <div className="bb-book-card-price">
+            {price !== undefined &&
+            price !== null &&
+            price !== '' ? (
+              <span>₹{price}</span>
             ) : (
-              <span className="bb-book-exchange-note">
-                Exchange Offer
-              </span>
+              <span>Contact for price</span>
             )}
           </div>
 
-          <div className="bb-book-card-actions">
-            {onAction ? (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onAction(book)}
-              >
-                {actionLabel}
-              </Button>
-            ) : (
-              <Link to={`/books/${_id || 'preview'}`}>
-                <Button size="sm" variant="primary">
-                  {actionLabel}
+          {showActions && (
+            <div className="bb-book-card-actions">
+              {onAction ? (
+                <Button
+                  onClick={handleActionClick}
+                  variant="primary"
+                  size="small"
+                >
+                  {actionLabel || 'View Details'}
                 </Button>
-              </Link>
-            )}
-          </div>
+              ) : (
+                <Link
+                  to={'/books/' + bookId}
+                  onClick={(event) => event.stopPropagation()}
+                  className="bb-book-card-view-link"
+                >
+                  View Details
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import BookCard from '../../components/books/BookCard';
@@ -9,9 +8,11 @@ import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
 import ErrorAlert from '../../components/common/ErrorAlert';
 import bookService from '../../services/bookService';
+import { useAuth } from '../../context/AuthContext';
 
 const BookListingPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,30 +20,25 @@ const BookListingPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('');
 
+  // Fetch books from API endpoint with debounced search and filtering
   const fetchCatalog = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
 
       const params = {};
-      if (searchQuery.trim()) {
-        params.search = searchQuery.trim();
-      }
-      if (filterType) {
-        params.type = filterType;
-      }
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (filterType) params.type = filterType;
 
-      const response = await bookService.getBooks(params);
-      const serverBooks =
-        response?.data?.data ?? response?.data ?? (Array.isArray(response) ? response : []);
-
+      const res = await bookService.getBooks(params);
+      const serverBooks = res?.data?.data ?? res?.data ?? (Array.isArray(res) ? res : []);
       setBooks(Array.isArray(serverBooks) ? serverBooks : []);
     } catch (err) {
-      console.error('[BookListing] Failed to load catalog:', err);
+      console.error('[BookListing] Failed to load catalog from API:', err);
       setError(
         err.response?.data?.message ||
           err.message ||
-          'Unable to retrieve books. Please try again.'
+          'Unable to retrieve catalog. Please check that the server is running.'
       );
       setBooks([]);
     } finally {
@@ -54,13 +50,31 @@ const BookListingPage = () => {
     const timer = setTimeout(() => {
       fetchCatalog();
     }, 250);
-
     return () => clearTimeout(timer);
   }, [fetchCatalog]);
 
   const resetFilters = () => {
     setSearchQuery('');
     setFilterType('');
+  };
+
+  const isMyBook = (book) => {
+    if (!user || !book.owner) {
+      return false;
+    }
+
+    const ownerId =
+      typeof book.owner === 'object'
+        ? book.owner._id || book.owner.id
+        : book.owner;
+
+    const userId = user._id || user.id;
+
+    return Boolean(
+      ownerId &&
+      userId &&
+      String(ownerId) === String(userId)
+    );
   };
 
   return (
@@ -184,13 +198,38 @@ const BookListingPage = () => {
           </div>
 
           <div className="book-grid">
-            {books.map((book) => (
-              <BookCard
-                key={book._id || book.id}
-                book={book}
-                actionLabel="View Details"
-              />
-            ))}
+            {books.map((book) => {
+              const myBook = isMyBook(book);
+
+              return (
+                <div
+                  key={book._id || book.id}
+                  style={{ position: 'relative' }}
+                >
+                  {myBook && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '0.75rem',
+                        right: '0.75rem',
+                        zIndex: 2,
+                      }}
+                    >
+                      <Badge variant="terracotta">
+                        Your Listing
+                      </Badge>
+                    </div>
+                  )}
+
+                  <BookCard
+                    book={book}
+                    actionLabel={
+                      myBook ? 'View Your Listing' : 'View Details'
+                    }
+                  />
+                </div>
+              );
+            })}
           </div>
         </>
       )}

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -12,11 +13,13 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
+    setMobileMenuOpen(false);
     navigate('/');
   };
 
   const closeMenu = () => setMobileMenuOpen(false);
-  const navLinkClass = ({ isActive }) => `bb-nav-link ${isActive ? 'active' : ''}`;
+  const navLinkClass = ({ isActive }) =>
+    `bb-nav-link ${isActive ? 'active' : ''}`;
 
   return (
     <header className="bb-navbar-wrapper">
@@ -36,12 +39,42 @@ const Navbar = () => {
         </button>
         <nav className={`bb-nav ${mobileMenuOpen ? 'is-open' : ''}`} aria-label="Main navigation">
           <ul className="bb-nav-links">
-            <li><NavLink to="/" end className={navLinkClass} onClick={closeMenu}>Home</NavLink></li>
-            <li><NavLink to="/books" className={navLinkClass} onClick={closeMenu}>Browse Books</NavLink></li>
-            <li><NavLink to="/exchange" className={navLinkClass} onClick={closeMenu}>Borrow &amp; Exchange</NavLink></li>
-            {isAuthenticated && <li><NavLink to="/dashboard" className={navLinkClass} onClick={closeMenu}>Dashboard</NavLink></li>}
-            {isAuthenticated && <li><NavLink to="/profile" className={navLinkClass} onClick={closeMenu}>Profile</NavLink></li>}
-            {isAuthenticated && user?.role === 'admin' && <li><NavLink to="/admin" className={navLinkClass} onClick={closeMenu}>Admin</NavLink></li>}
+            <li>
+              <NavLink to="/" end className={navLinkClass} onClick={closeMenu}>
+                Home
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/books" className={navLinkClass} onClick={closeMenu}>
+                Browse Books
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/exchange" className={navLinkClass} onClick={closeMenu}>
+                Borrow &amp; Exchange
+              </NavLink>
+            </li>
+            {isAuthenticated && (
+              <li>
+                <NavLink to="/dashboard" className={navLinkClass} onClick={closeMenu}>
+                  Dashboard
+                </NavLink>
+              </li>
+            )}
+            {isAuthenticated && (
+              <li>
+                <NavLink to="/profile" className={navLinkClass} onClick={closeMenu}>
+                  Profile
+                </NavLink>
+              </li>
+            )}
+            {isAuthenticated && user?.role === 'admin' && (
+              <li>
+                <NavLink to="/admin" className={navLinkClass} onClick={closeMenu}>
+                  Admin
+                </NavLink>
+              </li>
+            )}
           </ul>
           <div className="bb-nav-actions">
             {isAuthenticated ? (
@@ -49,14 +82,23 @@ const Navbar = () => {
                 <Link to="/books/add" onClick={closeMenu}><Button size="sm" variant="primary">+ List a Book</Button></Link>
                 <div className="bb-user-info">
                   <span className="bb-user-name">{user?.name || 'Student'}</span>
-                  {user?.role === 'admin' && <Badge variant="terracotta" size="sm">Admin</Badge>}
+                  {user?.role === 'admin' && (
+                    <Badge variant="terracotta" size="sm">Admin</Badge>
+                  )}
                 </div>
-                <Button size="sm" variant="outline" onClick={handleLogout}>Logout</Button>
+
+                <Button size="sm" variant="outline" onClick={handleLogout}>
+                  Logout
+                </Button>
               </div>
             ) : (
               <div className="bb-auth-buttons">
-                <Link to="/login" onClick={closeMenu}><Button size="sm" variant="outline">Sign In</Button></Link>
-                <Link to="/register" onClick={closeMenu}><Button size="sm" variant="primary">Join Library</Button></Link>
+                <Link to="/login" onClick={closeMenu}>
+                  <Button size="sm" variant="outline">Sign In</Button>
+                </Link>
+                <Link to="/register" onClick={closeMenu}>
+                  <Button size="sm" variant="primary">Join Library</Button>
+                </Link>
               </div>
             )}
           </div>
