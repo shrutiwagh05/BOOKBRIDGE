@@ -49,7 +49,6 @@ const AppRoutes = () => {
 
         {/* Module 2: Book Listing & Details */}
         <Route path="books" element={<BookListingPage />} />
-
         <Route path="books/:id" element={<BookDetailPage />} />
 
         <Route
@@ -75,6 +74,16 @@ const AppRoutes = () => {
 
         <Route
           path="exchange/requests"
+          element={
+            <ProtectedRoute>
+              <MyRequestsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Backwards-compatible alias for links using /requests */}
+        <Route
+          path="requests"
           element={
             <ProtectedRoute>
               <MyRequestsPage />
@@ -118,6 +127,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="dashboard/transactions"
           element={
@@ -137,7 +147,6 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Edit Profile */}
         <Route
           path="profile/edit"
           element={
@@ -166,7 +175,6 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Keep the shorter notifications URL working for navigation links/bookmarks. */}
         <Route
           path="notifications"
           element={
