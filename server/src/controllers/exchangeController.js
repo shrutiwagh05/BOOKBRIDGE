@@ -35,9 +35,26 @@ const getIncomingRequests = async (req, res, next) => {
       .populate('requester', 'name email college department rating')
       .sort({ createdAt: -1 });
 
+    // Temporary diagnostic: compare the authenticated owner with recently stored requests.
+    const recentRequests = await ExchangeRequest.find()
+      .select('owner requester book status type createdAt')
+      .populate('book', 'title')
+      .sort({ createdAt: -1 })
+      .limit(25)
+      .lean();
+
     console.info('[Incoming Requests Diagnostic]', {
       authenticatedUserId: req.user._id.toString(),
       returnedCount: requests.length,
+      recentRequests: recentRequests.map((request) => ({
+        requestId: request._id.toString(),
+        bookTitle: request.book?.title || null,
+        ownerId: request.owner?.toString() || null,
+        requesterId: request.requester?.toString() || null,
+        status: request.status,
+        type: request.type,
+        createdAt: request.createdAt,
+      })),
     });
     res.status(200).json({ success: true, count: requests.length, data: requests });
   } catch (error) {
