@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
@@ -216,7 +217,7 @@ const MyListingsPage = () => {
       ) : (
         <div className="grid-3">
           {books.map((book) => (
-            <div key={book._id}>
+            <div key={book._id} className="my-listing-cell">
               <BookCard book={book} actionLabel="View Details" />
 
               <section
