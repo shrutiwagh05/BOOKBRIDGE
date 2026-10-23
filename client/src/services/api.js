@@ -1,9 +1,22 @@
 import axios from 'axios';
 
+// Base API URL resolver:
+// 1. If VITE_API_URL is provided, normalize it to ensure it points to the API route without trailing slashes.
+// 2. In local development (import.meta.env.DEV), default to '/api' to use the Vite proxy to localhost:5000.
+// 3. In production / preview deployments without an explicit env var, fall back to the deployed test backend.
+const resolveBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && envUrl.trim()) {
+    const trimmed = envUrl.trim().replace(/\/+$/, '');
+    return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+  }
+  return import.meta.env.DEV ? '/api' : 'https://bookbridge-s1mx.onrender.com/api';
+};
+
 // Base API instance configured with default headers and base URL.
 // A timeout prevents auth forms from spinning forever if the API is asleep or unreachable.
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: resolveBaseUrl(),
   timeout: 20000,
   headers: {
     'Content-Type': 'application/json',

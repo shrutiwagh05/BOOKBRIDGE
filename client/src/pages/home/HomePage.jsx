@@ -71,9 +71,9 @@ const HomePage = () => {
       try {
         setLoadingFeatured(true);
         const res = await bookService.getBooks({ limit: 6, sort: 'newest' });
-        setFeaturedBooks(res.data || []);
-      } catch {
-        setFeaturedError('Could not load featured books right now.');
+        setFeaturedBooks(Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
+      } catch (err) {
+        setFeaturedError(err.message || 'Could not load featured books right now.');
       } finally {
         setLoadingFeatured(false);
       }
@@ -87,9 +87,9 @@ const HomePage = () => {
       try {
         setLoadingRecent(true);
         const res = await bookService.getBooks({ limit: 4, sort: 'newest' });
-        setRecentBooks(res.data || []);
-      } catch {
-        setRecentError('Could not load recent books right now.');
+        setRecentBooks(Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
+      } catch (err) {
+        setRecentError(err.message || 'Could not load recent books right now.');
       } finally {
         setLoadingRecent(false);
       }
@@ -249,9 +249,9 @@ const HomePage = () => {
           </div>
         ) : (
           <div className="grid-3">
-            {featuredBooks.map((book) => (
+            {featuredBooks.map((book, idx) => (
               <BookCard
-                key={book._id}
+                key={book._id || book.id || idx}
                 book={book}
                 actionLabel="View Details"
               />
@@ -327,9 +327,9 @@ const HomePage = () => {
           </div>
         ) : (
           <div className="grid-4">
-            {recentBooks.map((book) => (
+            {recentBooks.map((book, idx) => (
               <BookCard
-                key={book._id}
+                key={book._id || book.id || idx}
                 book={book}
                 actionLabel="View Details"
               />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Badge from '../common/Badge';
 import Button from '../common/Button';
@@ -25,10 +25,13 @@ const BookCard = ({
   actionLabel = 'View Details',
   className = '',
 }) => {
+  const [imageError, setImageError] = useState(false);
+
   if (!book) return null;
 
   const {
     _id,
+    id,
     title = 'Untitled Book',
     author = 'Unknown Author',
     isbn = '',
@@ -40,15 +43,37 @@ const BookCard = ({
     locationCollege = '',
   } = book;
 
+  const bookId = _id || id;
+  const rawImagePath = image || (Array.isArray(book.images) && book.images[0] ? book.images[0] : '');
+
+  // Resolve uploaded images (/uploads/...) to the backend origin
+  const getCoverImageUrl = (path) => {
+    if (!path) return '';
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+      return path;
+    }
+    if (path.startsWith('/uploads/')) {
+      const apiBaseUrl =
+        import.meta.env.VITE_API_URL ||
+        (import.meta.env.DEV ? '' : 'https://bookbridge-s1mx.onrender.com');
+      const backendUrl = apiBaseUrl.replace(/\/api\/?$/, '');
+      return `${backendUrl}${path}`;
+    }
+    return path;
+  };
+
+  const coverImageUrl = getCoverImageUrl(rawImagePath);
+
   return (
     <div className={`bb-book-card ${className}`}>
       {/* Book Cover Area */}
       <div className="bb-book-card-cover">
-        {(image || book.images?.[0]) ? (
+        {coverImageUrl && !imageError ? (
           <img
-            src={image || book.images?.[0]}
+            src={coverImageUrl}
             alt={title}
             className="bb-book-cover-img"
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="bb-book-cover-placeholder">
@@ -83,7 +108,7 @@ const BookCard = ({
           className="bb-book-title"
           title={title}
         >
-          <Link to={`/books/${_id || 'preview'}`}>
+          <Link to={`/books/${bookId || 'preview'}`}>
             {title}
           </Link>
         </h3>
@@ -132,7 +157,7 @@ const BookCard = ({
                 {actionLabel}
               </Button>
             ) : (
-              <Link to={`/books/${_id || 'preview'}`}>
+              <Link to={`/books/${bookId || 'preview'}`}>
                 <Button size="sm" variant="primary">
                   {actionLabel}
                 </Button>
