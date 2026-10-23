@@ -46,7 +46,7 @@ const DiscoveryPage = () => {
   const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
 
   const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [totalCount, setTotalCount] = useState(0);
 
