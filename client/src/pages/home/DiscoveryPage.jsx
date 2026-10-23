@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import BookCard from '../../components/books/BookCard';
 import Button from '../../components/common/Button';
 import Badge from '../../components/common/Badge';
@@ -36,20 +36,40 @@ const CONDITION_OPTIONS = ['New', 'Like New', 'Good', 'Fair'];
 /* ─── Component ───────────────────────────────────────────────── */
 const DiscoveryPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  /* Read initial state from URL query params (so hero search links work) */
-  const [searchQuery,    setSearchQuery]    = useState(searchParams.get('search')   || '');
-  const [category,       setCategory]       = useState(searchParams.get('category') || '');
-  const [listingType,    setListingType]    = useState(searchParams.get('type')     || '');
-  const [condition,      setCondition]      = useState('');
-  const [sort,           setSort]           = useState(searchParams.get('sort')     || 'newest');
+  /* Read initial state from URL query params */
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [category, setCategory] = useState(searchParams.get('category') || '');
+  const [listingType, setListingType] = useState(searchParams.get('type') || '');
+  const [condition, setCondition] = useState(searchParams.get('condition') || '');
+  const [sort, setSort] = useState(searchParams.get('sort') || 'newest');
 
-  const [books,          setBooks]          = useState([]);
-  const [loading,        setLoading]        = useState(false);
-  const [error,          setError]          = useState('');
-  const [totalCount,     setTotalCount]     = useState(0);
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [totalCount, setTotalCount] = useState(0);
 
-  /* Debounced search — fetch whenever filters change */
+  // Track whether change came from URL or user interaction
+  const isSyncingFromUrl = useRef(false);
+
+  /* Synchronize local state from URL query parameters (handles back/forward navigation and links) */
+  useEffect(() => {
+    const urlSearch = searchParams.get('search') || '';
+    const urlCategory = searchParams.get('category') || '';
+    const urlType = searchParams.get('type') || '';
+    const urlCondition = searchParams.get('condition') || '';
+    const urlSort = searchParams.get('sort') || 'newest';
+
+    isSyncingFromUrl.current = true;
+    setSearchQuery((prev) => (prev !== urlSearch ? urlSearch : prev));
+    setCategory((prev) => (prev !== urlCategory ? urlCategory : prev));
+    setListingType((prev) => (prev !== urlType ? urlType : prev));
+    setCondition((prev) => (prev !== urlCondition ? urlCondition : prev));
+    setSort((prev) => (prev !== urlSort ? urlSort : prev));
+  }, [searchParams]);
+
+  /* Fetch books from backend API */
   const fetchBooks = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -60,9 +80,9 @@ const DiscoveryPage = () => {
       if (listingType)        params.type = listingType;
 
       const res = await bookService.getBooks(params);
-      let data = res.data || [];
+      let data = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
 
-      /* Client-side condition filter (no backend field for it yet) */
+      /* Client-side condition filter (for listings with specified condition) */
       if (condition) {
         data = data.filter((b) => b.condition === condition);
       }
@@ -70,30 +90,51 @@ const DiscoveryPage = () => {
       setBooks(data);
       setTotalCount(data.length);
     } catch (err) {
-      setError(err.message || 'Something went wrong while searching. Please try again.');
+      setError(err.message || 'Something went wrong while searching the library. Please try again.');
       setBooks([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
   }, [searchQuery, category, listingType, condition, sort]);
 
-  /* Sync URL params so links from HomePage pre-fill filters */
+  /* Debounced fetch whenever filters change */
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchBooks();
-    }, 300); // 300ms debounce
+    }, 300);
     return () => clearTimeout(timer);
   }, [fetchBooks]);
 
-  /* Update URL query string on filter changes */
+  /* Update URL query string when filters change */
   useEffect(() => {
-    const params = {};
-    if (searchQuery) params.search   = searchQuery;
-    if (category)    params.category = category;
-    if (listingType) params.type     = listingType;
-    if (sort !== 'newest') params.sort = sort;
-    setSearchParams(params, { replace: true });
-  }, [searchQuery, category, listingType, sort, setSearchParams]);
+    if (isSyncingFromUrl.current) {
+      isSyncingFromUrl.current = false;
+      return;
+    }
+
+    const currentSearch = searchParams.get('search') || '';
+    const currentCategory = searchParams.get('category') || '';
+    const currentType = searchParams.get('type') || '';
+    const currentCondition = searchParams.get('condition') || '';
+    const currentSort = searchParams.get('sort') || 'newest';
+
+    if (
+      searchQuery !== currentSearch ||
+      category !== currentCategory ||
+      listingType !== currentType ||
+      condition !== currentCondition ||
+      sort !== currentSort
+    ) {
+      const params = {};
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (category)           params.category = category;
+      if (listingType)        params.type = listingType;
+      if (condition)          params.condition = condition;
+      if (sort !== 'newest')  params.sort = sort;
+      setSearchParams(params, { replace: true });
+    }
+  }, [searchQuery, category, listingType, condition, sort, searchParams, setSearchParams]);
 
   const handleReset = () => {
     setSearchQuery('');
@@ -101,17 +142,19 @@ const DiscoveryPage = () => {
     setListingType('');
     setCondition('');
     setSort('newest');
-    setSearchParams({});
+    setSearchParams({}, { replace: true });
   };
 
-  const hasActiveFilters = searchQuery || category || listingType || condition || sort !== 'newest';
+  const hasActiveFilters = Boolean(
+    searchQuery.trim() || category || listingType || condition || sort !== 'newest'
+  );
 
   return (
     <div className="bb-discovery-page container">
 
       {/* ── Page Header ─────────────────────────────────────── */}
       <div className="bb-discovery-header">
-        <Badge variant="terracotta">Module 1 • Discovery Archive</Badge>
+        <Badge variant="terracotta">Discovery Archive</Badge>
         <h1 style={{ marginTop: '0.5rem' }}>Discover Books</h1>
         <p className="lead text-muted">
           Search, filter and sort thousands of campus book listings — all
@@ -128,10 +171,10 @@ const DiscoveryPage = () => {
             <input
               type="text"
               className="bb-discovery-search-input"
-              placeholder="Search by title or author…"
+              placeholder="Search by title, author, or keywords…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search books by title or author"
+              aria-label="Search books by title, author, or keywords"
             />
             {searchQuery && (
               <button
@@ -194,7 +237,7 @@ const DiscoveryPage = () => {
         <div className="bb-discovery-meta-row">
           <div className="bb-discovery-result-count">
             {loading ? (
-              <span className="text-muted text-small">Searching…</span>
+              <span className="text-muted text-small">Searching catalog…</span>
             ) : (
               <span className="text-small">
                 <strong>{totalCount}</strong>{' '}
@@ -237,6 +280,12 @@ const DiscoveryPage = () => {
                 <button onClick={() => setCondition('')} aria-label="Remove condition filter">✕</button>
               </span>
             )}
+            {sort !== 'newest' && (
+              <span className="bb-filter-chip">
+                ↕️ {SORT_OPTIONS.find((s) => s.value === sort)?.label || sort}
+                <button onClick={() => setSort('newest')} aria-label="Reset sort">✕</button>
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -271,7 +320,7 @@ const DiscoveryPage = () => {
                 : 'The library archive is empty right now. Be the first to list a book!'
             }
             actionLabel={hasActiveFilters ? 'Reset All Filters' : 'List a Book'}
-            onAction={hasActiveFilters ? handleReset : () => window.location.href = '/books/add'}
+            onAction={hasActiveFilters ? handleReset : () => navigate('/books/add')}
           />
         )}
 
@@ -279,9 +328,9 @@ const DiscoveryPage = () => {
         {!loading && !error && books.length > 0 && (
           <>
             <div className="grid-3">
-              {books.map((book) => (
+              {books.map((book, idx) => (
                 <BookCard
-                  key={book._id}
+                  key={book._id || book.id || idx}
                   book={book}
                   actionLabel="View Details"
                 />
@@ -305,9 +354,9 @@ const DiscoveryPage = () => {
         )}
       </div>
 
-      {/* ── Sidebar / Quick Links ───────────────────────────── */}
+      {/* ── Quick Links Sidebar ───────────────────────────── */}
       <div className="bb-discovery-quicklinks paper-card">
-        <h4>Quick Browse</h4>
+        <h4>Quick Browse by Subject</h4>
         <div className="bb-quicklink-categories">
           {CATEGORIES.map((cat) => (
             <button
@@ -319,7 +368,7 @@ const DiscoveryPage = () => {
             </button>
           ))}
         </div>
-        <div className="vintage-divider"><span>or</span></div>
+        <div className="vintage-divider"><span>or browse by type</span></div>
         <div className="bb-quicklink-types">
           {LISTING_TYPES.map((type) => (
             <button
