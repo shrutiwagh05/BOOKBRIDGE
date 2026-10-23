@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
 const ExchangeRequest = require('../models/ExchangeRequest');
 const Book = require('../models/Book');
+const { validateExchangeInput } = require('../utils/exchangeValidation');
 
 // @desc    Get user's incoming and outgoing exchange/borrow requests (combined)
 // @route   GET /api/exchanges
@@ -15,11 +17,7 @@ const getMyExchanges = async (req, res, next) => {
       .populate('owner', 'name email college department rating')
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      count: requests.length,
-      data: requests,
-    });
+    res.status(200).json({ success: true, count: requests.length, data: requests });
   } catch (error) {
     next(error);
   }
@@ -36,11 +34,7 @@ const getIncomingRequests = async (req, res, next) => {
       .populate('requester', 'name email college department rating')
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      count: requests.length,
-      data: requests,
-    });
+    res.status(200).json({ success: true, count: requests.length, data: requests });
   } catch (error) {
     next(error);
   }
@@ -57,11 +51,7 @@ const getOutgoingRequests = async (req, res, next) => {
       .populate('owner', 'name email college department rating')
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      count: requests.length,
-      data: requests,
-    });
+    res.status(200).json({ success: true, count: requests.length, data: requests });
   } catch (error) {
     next(error);
   }
@@ -72,46 +62,30 @@ const getOutgoingRequests = async (req, res, next) => {
 // @access  Private
 const createExchangeRequest = async (req, res, next) => {
   try {
-    const { bookId, ownerId, type, offeredBookId, durationDays, message } = req.body;
+    const { bookId, type, offeredBookId, durationDays, message } = req.body;
 
-    if (!bookId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Book ID is required',
-      });
+    if (!bookId) return res.status(400).json({ success: false, message: 'Book ID is required' });
+    if (!mongoose.isValidObjectId(bookId)) {
+      return res.status(400).json({ success: false, message: 'Invalid book ID.' });
     }
 
-    // 1. Verify book existence and availability
     const book = await Book.findById(bookId);
-    if (!book) {
-      return res.status(404).json({
-        success: false,
-        message: 'Book not found',
-      });
-    }
-
+    if (!book) return res.status(404).json({ success: false, message: 'Book not found' });
     if (book.status !== 'available') {
       return res.status(400).json({
         success: false,
         message: `This book is currently ${book.status} and cannot be requested right now.`,
       });
     }
-
-    // 2. Prevent requesting own book
     if (book.owner.toString() === req.user._id.toString()) {
-      return res.status(400).json({
-        success: false,
-        message: 'You cannot request your own book.',
-      });
+      return res.status(400).json({ success: false, message: 'You cannot request your own book.' });
     }
 
-    // 3. Prevent duplicate active requests for the same book from the same user
     const existingActiveRequest = await ExchangeRequest.findOne({
       book: bookId,
       requester: req.user._id,
       status: { $in: ['pending', 'accepted', 'approved', 'active'] },
     });
-
     if (existingActiveRequest) {
       return res.status(400).json({
         success: false,
@@ -119,46 +93,51 @@ const createExchangeRequest = async (req, res, next) => {
       });
     }
 
-    // 4. Validate offered book if direct exchange
-    const requestType = type || (book.listingType === 'Exchange' ? 'exchange' : 'borrow');
-    let validatedOfferedBookId = null;
+    const requestedType = type || (book.listingType === 'Exchange' ? 'exchange' : 'borrow');
+    const validation = validateExchangeInput({
+      type: requestedType,
+      durationDays,
+      message,
+      offeredBookId,
+      bookId: book._id,
+      defaultDuration: book.rentalPeriodDays || 14,
+    });
+    if (validation.error) return res.status(400).json({ success: false, message: validation.error });
 
-    if (requestType === 'exchange') {
-      if (offeredBookId) {
-        const offeredBook = await Book.findById(offeredBookId);
-        if (!offeredBook) {
-          return res.status(404).json({
-            success: false,
-            message: 'Offered trade book not found',
-          });
-        }
-        if (offeredBook.owner.toString() !== req.user._id.toString()) {
-          return res.status(403).json({
-            success: false,
-            message: 'You can only offer books that you own in an exchange proposal',
-          });
-        }
-        if (offeredBook.status !== 'available') {
-          return res.status(400).json({
-            success: false,
-            message: 'The book you offered in trade is currently not available',
-          });
-        }
-        validatedOfferedBookId = offeredBook._id;
+    let validatedOfferedBookId = null;
+    if (validation.value.requestType === 'exchange') {
+      if (!mongoose.isValidObjectId(offeredBookId)) {
+        return res.status(400).json({ success: false, message: 'Invalid offered book ID.' });
       }
+      const offeredBook = await Book.findById(offeredBookId);
+      if (!offeredBook) {
+        return res.status(404).json({ success: false, message: 'Offered trade book not found.' });
+      }
+      if (offeredBook.owner.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, message: 'You can only offer books that you own.' });
+      }
+      if (offeredBook.status !== 'available') {
+        return res.status(400).json({ success: false, message: 'The book you offered is currently not available.' });
+      }
+      validatedOfferedBookId = offeredBook._id;
     }
 
-    const targetOwnerId = ownerId || book.owner;
-    const loanDuration = durationDays ? Number(durationDays) : (book.rentalPeriodDays || 14);
+    const requestType = validation.value.requestType;
+    if (requestType === 'borrow' && book.listingType !== 'Borrow') {
+      return res.status(400).json({ success: false, message: 'This listing is not available for borrowing.' });
+    }
+    if (requestType === 'exchange' && book.listingType !== 'Exchange') {
+      return res.status(400).json({ success: false, message: 'This listing is not available for exchange.' });
+    }
 
     const exchange = await ExchangeRequest.create({
       book: bookId,
-      owner: targetOwnerId,
+      owner: book.owner,
       requester: req.user._id,
       type: requestType,
       offeredBook: validatedOfferedBookId,
-      durationDays: loanDuration,
-      message: message ? message.trim() : '',
+      durationDays: validation.value.durationDays,
+      message: validation.value.message,
       status: 'pending',
     });
 
@@ -181,85 +160,95 @@ const createExchangeRequest = async (req, res, next) => {
 // @route   PATCH /api/exchanges/:id/accept
 // @access  Private
 const acceptExchangeRequest = async (req, res, next) => {
+  let session;
   try {
-    const request = await ExchangeRequest.findById(req.params.id);
-
-    if (!request) {
-      return res.status(404).json({
-        success: false,
-        message: 'Request not found',
-      });
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid request ID.' });
     }
 
-    // Authorization: Only the owner can accept
-    if (request.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Only the book owner has permission to accept this request',
-      });
-    }
+    session = await mongoose.startSession();
+    let responseMessage = '';
 
-    if (request.status !== 'pending') {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot accept request with status: ${request.status}`,
-      });
-    }
-
-    // Verify book is still available
-    const book = await Book.findById(request.book);
-    if (!book || book.status !== 'available') {
-      return res.status(400).json({
-        success: false,
-        message: 'The requested book is no longer available.',
-      });
-    }
-
-    // Calculate return due date for borrow transactions
-    let dueDate = null;
-    if (request.type === 'borrow') {
-      const days = request.durationDays || 14;
-      dueDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-    }
-
-    request.status = 'accepted';
-    request.returnDueDate = dueDate;
-    await request.save();
-
-    // Synchronize book status to borrowed or exchanged
-    book.status = request.type === 'borrow' ? 'borrowed' : 'exchanged';
-    await book.save();
-
-    // If exchange with offered book, mark offered book status as exchanged too
-    if (request.type === 'exchange' && request.offeredBook) {
-      await Book.findByIdAndUpdate(request.offeredBook, { status: 'exchanged' });
-    }
-
-    // Auto-reject any conflicting pending requests for the same book
-    await ExchangeRequest.updateMany(
-      {
-        book: book._id,
-        _id: { $ne: request._id },
-        status: 'pending',
-      },
-      {
-        status: 'rejected',
-        message: 'Book accepted by another student request.',
+    await session.withTransaction(async () => {
+      const request = await ExchangeRequest.findById(req.params.id).session(session);
+      if (!request) {
+        const error = new Error('Request not found');
+        error.statusCode = 404;
+        throw error;
       }
-    );
+      if (request.owner.toString() !== req.user._id.toString()) {
+        const error = new Error('Only the book owner has permission to accept this request');
+        error.statusCode = 403;
+        throw error;
+      }
+      if (request.status !== 'pending') {
+        const error = new Error(`Cannot accept request with status: ${request.status}`);
+        error.statusCode = 400;
+        throw error;
+      }
 
-    const updated = await ExchangeRequest.findById(request._id)
+      const book = await Book.findById(request.book).session(session);
+      if (!book || book.status !== 'available') {
+        const error = new Error('The requested book is no longer available.');
+        error.statusCode = 400;
+        throw error;
+      }
+
+      let offeredBookForExchange = null;
+      if (request.type === 'exchange') {
+        offeredBookForExchange = await Book.findById(request.offeredBook).session(session);
+        if (
+          !offeredBookForExchange ||
+          offeredBookForExchange.status !== 'available' ||
+          offeredBookForExchange.owner.toString() !== request.requester.toString()
+        ) {
+          const error = new Error('The offered book is no longer available for this exchange.');
+          error.statusCode = 400;
+          throw error;
+        }
+      }
+
+      request.status = 'accepted';
+      request.returnDueDate = request.type === 'borrow'
+        ? new Date(Date.now() + (request.durationDays || 14) * 24 * 60 * 60 * 1000)
+        : null;
+      await request.save({ session });
+
+      if (request.type === 'borrow') {
+        book.status = 'borrowed';
+        await book.save({ session });
+      } else if (request.type === 'exchange') {
+        const originalOwnerId = book.owner;
+        book.owner = request.requester;
+        book.status = 'available';
+        offeredBookForExchange.owner = originalOwnerId;
+        offeredBookForExchange.status = 'available';
+        await book.save({ session });
+        await offeredBookForExchange.save({ session });
+      }
+
+      await ExchangeRequest.updateMany(
+        { book: book._id, _id: { $ne: request._id }, status: 'pending' },
+        { status: 'rejected', message: 'Book accepted by another student request.' },
+        { session }
+      );
+
+      responseMessage = request.type === 'borrow'
+        ? 'Borrow request accepted. The book is now marked as borrowed.'
+        : 'Exchange accepted. Ownership of both books has been transferred.';
+    });
+
+    const updated = await ExchangeRequest.findById(req.params.id)
       .populate('book', 'title author images listingType status')
       .populate('requester', 'name email college')
       .populate('owner', 'name email college');
 
-    res.status(200).json({
-      success: true,
-      message: 'Request accepted successfully. Book status has been updated to active loan.',
-      data: updated,
-    });
+    res.status(200).json({ success: true, message: responseMessage, data: updated });
   } catch (error) {
+    if (error.statusCode) return res.status(error.statusCode).json({ success: false, message: error.message });
     next(error);
+  } finally {
+    if (session) await session.endSession();
   }
 };
 
@@ -268,43 +257,28 @@ const acceptExchangeRequest = async (req, res, next) => {
 // @access  Private
 const rejectExchangeRequest = async (req, res, next) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid request ID.' });
+    }
     const request = await ExchangeRequest.findById(req.params.id);
-
-    if (!request) {
-      return res.status(404).json({
-        success: false,
-        message: 'Request not found',
-      });
-    }
-
-    // Authorization: Only the owner can reject
+    if (!request) return res.status(404).json({ success: false, message: 'Request not found' });
     if (request.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Only the book owner has permission to reject this request',
-      });
+      return res.status(403).json({ success: false, message: 'Only the book owner has permission to reject this request' });
     }
-
     if (request.status !== 'pending') {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot reject request with status: ${request.status}`,
-      });
+      return res.status(400).json({ success: false, message: `Cannot reject request with status: ${request.status}` });
     }
 
     request.status = 'rejected';
     if (req.body.reason) {
+      const reason = String(req.body.reason).trim().slice(0, 500);
       request.message = request.message
-        ? `${request.message} (Rejection Note: ${req.body.reason.trim()})`
-        : `Rejection Note: ${req.body.reason.trim()}`;
+        ? `${request.message} (Rejection Note: ${reason})`.slice(0, 500)
+        : `Rejection Note: ${reason}`;
     }
     await request.save();
 
-    res.status(200).json({
-      success: true,
-      message: 'Request has been rejected.',
-      data: request,
-    });
+    res.status(200).json({ success: true, message: 'Request has been rejected.', data: request });
   } catch (error) {
     next(error);
   }
@@ -315,23 +289,14 @@ const rejectExchangeRequest = async (req, res, next) => {
 // @access  Private
 const cancelExchangeRequest = async (req, res, next) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid request ID.' });
+    }
     const request = await ExchangeRequest.findById(req.params.id);
-
-    if (!request) {
-      return res.status(404).json({
-        success: false,
-        message: 'Request not found',
-      });
-    }
-
-    // Authorization: Only the original requester can cancel
+    if (!request) return res.status(404).json({ success: false, message: 'Request not found' });
     if (request.requester.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'You can only cancel your own submitted requests',
-      });
+      return res.status(403).json({ success: false, message: 'You can only cancel your own submitted requests' });
     }
-
     if (request.status !== 'pending') {
       return res.status(400).json({
         success: false,
@@ -341,12 +306,7 @@ const cancelExchangeRequest = async (req, res, next) => {
 
     request.status = 'cancelled';
     await request.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Your request has been cancelled.',
-      data: request,
-    });
+    res.status(200).json({ success: true, message: 'Your request has been cancelled.', data: request });
   } catch (error) {
     next(error);
   }
@@ -356,67 +316,74 @@ const cancelExchangeRequest = async (req, res, next) => {
 // @route   PATCH /api/exchanges/:id/return
 // @access  Private (Owner or Requester)
 const returnExchangeRequest = async (req, res, next) => {
+  let session;
   try {
-    const request = await ExchangeRequest.findById(req.params.id);
-
-    if (!request) {
-      return res.status(404).json({
-        success: false,
-        message: 'Transaction request not found',
-      });
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid request ID.' });
     }
 
-    // Authorization: Both owner and borrower are involved in the return
-    const isOwner = request.owner.toString() === req.user._id.toString();
-    const isRequester = request.requester.toString() === req.user._id.toString();
-
-    if (!isOwner && !isRequester) {
-      return res.status(403).json({
-        success: false,
-        message: 'You are not a participant in this transaction',
-      });
-    }
-
-    // Check eligible status
-    const eligibleStatuses = ['accepted', 'approved', 'active'];
-    if (!eligibleStatuses.includes(request.status)) {
-      return res.status(400).json({
-        success: false,
-        message: `Transaction cannot be marked as returned from status: ${request.status}`,
-      });
-    }
-
-    request.status = 'returned';
-    await request.save();
-
-    // Restore book availability in Book collection
-    const book = await Book.findById(request.book);
-    if (book) {
-      book.status = 'available';
-      await book.save();
-    }
-
-    // If direct trade with offered book, restore offered book too
-    if (request.type === 'exchange' && request.offeredBook) {
-      const offered = await Book.findById(request.offeredBook);
-      if (offered) {
-        offered.status = 'available';
-        await offered.save();
+    session = await mongoose.startSession();
+    await session.withTransaction(async () => {
+      const request = await ExchangeRequest.findById(req.params.id).session(session);
+      if (!request) {
+        const error = new Error('Transaction request not found');
+        error.statusCode = 404;
+        throw error;
       }
-    }
 
-    const updated = await ExchangeRequest.findById(request._id)
+      const userId = req.user._id.toString();
+      const isOwner = request.owner.toString() === userId;
+      const isRequester = request.requester.toString() === userId;
+      if (!isOwner && !isRequester) {
+        const error = new Error('You are not a participant in this transaction');
+        error.statusCode = 403;
+        throw error;
+      }
+
+      if (!['accepted', 'approved', 'active'].includes(request.status)) {
+        const error = new Error(`Transaction cannot be marked as returned from status: ${request.status}`);
+        error.statusCode = 400;
+        throw error;
+      }
+
+      const isBorrow = request.type === 'borrow';
+      if (isBorrow) {
+        const book = await Book.findById(request.book).session(session);
+        if (!book) {
+          const error = new Error('The borrowed book could not be found.');
+          error.statusCode = 404;
+          throw error;
+        }
+        if (book.status !== 'borrowed') {
+          const error = new Error('The book is not currently marked as borrowed.');
+          error.statusCode = 409;
+          throw error;
+        }
+        book.status = 'available';
+        await book.save({ session });
+      }
+
+      request.status = isBorrow ? 'returned' : 'completed';
+      await request.save({ session });
+    });
+
+    const updated = await ExchangeRequest.findById(req.params.id)
       .populate('book', 'title author images listingType status')
       .populate('requester', 'name email college')
       .populate('owner', 'name email college');
 
     res.status(200).json({
       success: true,
-      message: 'Volume marked as returned! Book is now available on campus shelves again.',
+      message: updated.type === 'borrow'
+        ? 'Book marked as returned and is available again.'
+        : 'Exchange marked as completed.',
       data: updated,
     });
   } catch (error) {
+    if (error.statusCode) return res.status(error.statusCode).json({ success: false, message: error.message });
     next(error);
+  } finally {
+    if (session) await session.endSession();
   }
 };
 

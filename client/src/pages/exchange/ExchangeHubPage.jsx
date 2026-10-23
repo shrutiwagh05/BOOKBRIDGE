@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import bookService from '../../services/bookService';
-import userService from '../../services/userService';
 import exchangeService from '../../services/exchangeService';
 import BookCard from '../../components/books/BookCard';
 import Button from '../../components/common/Button';
@@ -14,62 +13,6 @@ import EmptyState from '../../components/common/EmptyState';
 import ErrorAlert from '../../components/common/ErrorAlert';
 import './ExchangeHub.css';
 
-// Fallback campus books for demo if database has no entries yet
-const fallbackCampusBooks = [
-  {
-    _id: 'demo-b-1',
-    title: 'Operating System Concepts (10th Edition)',
-    author: 'Abraham Silberschatz, Peter B. Galvin',
-    category: 'Computer Science & IT',
-    listingType: 'Borrow',
-    rentalPeriodDays: 14,
-    condition: 'Good',
-    locationCollege: 'Department of Computing',
-    status: 'available',
-    description: 'Silberschatz OS concepts dinosaur book. All chapters intact, clean margins.',
-    owner: { _id: 'owner-101', name: 'Aarav Sharma', college: 'Campus Library Desk' },
-  },
-  {
-    _id: 'demo-b-2',
-    title: 'Design Patterns: Elements of Reusable Object-Oriented Software',
-    author: 'Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides',
-    category: 'Computer Science & IT',
-    listingType: 'Exchange',
-    condition: 'Like New',
-    locationCollege: 'Boys Hostel Wing B',
-    status: 'available',
-    description: 'Gang of Four design patterns reference. Looking to exchange for Database System Concepts.',
-    exchangePreferences: 'Database Systems or Microprocessors',
-    owner: { _id: 'owner-102', name: 'Priya Patel', college: 'CS Dept Block' },
-  },
-  {
-    _id: 'demo-b-3',
-    title: 'Campbell Biology (12th Edition)',
-    author: 'Lisa A. Urry, Michael L. Cain',
-    category: 'Medical & Science',
-    listingType: 'Borrow',
-    rentalPeriodDays: 21,
-    condition: 'Like New',
-    locationCollege: 'Life Sciences Hall',
-    status: 'available',
-    description: 'Heavy hardcover. Willing to lend for 3 weeks for mid-term preparations.',
-    owner: { _id: 'owner-103', name: 'Rohan Deshmukh', college: 'Bio Labs' },
-  },
-  {
-    _id: 'demo-b-4',
-    title: 'Economics (Principles & Applications)',
-    author: 'N. Gregory Mankiw',
-    category: 'Business & Economics',
-    listingType: 'Exchange',
-    condition: 'Good',
-    locationCollege: 'Management Wing',
-    status: 'available',
-    description: 'Core micro/macro concepts. Open to exchanging for Corporate Finance.',
-    exchangePreferences: 'Corporate Finance or Accounting Principles',
-    owner: { _id: 'owner-104', name: 'Neha Joshi', college: 'Commerce Library' },
-  },
-];
-
 const ExchangeHubPage = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -78,6 +21,7 @@ const ExchangeHubPage = () => {
   const [books, setBooks] = useState([]);
   const [userBooks, setUserBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState('');
   const [userBooksLoading, setUserBooksLoading] = useState(false);
 
   // Filter states
@@ -102,19 +46,16 @@ const ExchangeHubPage = () => {
     const fetchCatalog = async () => {
       try {
         setLoading(true);
+        setCatalogError('');
         const res = await bookService.getBooks();
-        if (res.data && res.data.length > 0) {
-          // Filter to books meant for Borrow or Exchange that are currently available
-          const exchangeable = res.data.filter(
-            (b) => (b.listingType === 'Borrow' || b.listingType === 'Exchange') && b.status === 'available'
-          );
-          setBooks(exchangeable.length > 0 ? exchangeable : fallbackCampusBooks);
-        } else {
-          setBooks(fallbackCampusBooks);
-        }
+        const liveBooks = Array.isArray(res.data) ? res.data : [];
+        // Only show real, available Borrow/Exchange listings returned by the API.
+        setBooks(liveBooks.filter(
+          (book) => ['Borrow', 'Exchange'].includes(book.listingType) && book.status === 'available'
+        ));
       } catch (err) {
-        console.info('[ExchangeHub] Using campus fallback dataset');
-        setBooks(fallbackCampusBooks);
+        setBooks([]);
+        setCatalogError(err.message || 'Could not load available books. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -129,12 +70,11 @@ const ExchangeHubPage = () => {
       if (isAuthenticated) {
         try {
           setUserBooksLoading(true);
-          const res = await userService.getProfile();
-          if (res.data?.myListings) {
-            setUserBooks(res.data.myListings.filter((b) => b.status === 'available'));
-          }
+          const res = await bookService.getMyListings();
+          setUserBooks(Array.isArray(res.data) ? res.data.filter((book) => book.status === 'available') : []);
         } catch (err) {
-          console.warn('[ExchangeHub] Could not load user listings');
+          setUserBooks([]);
+          setModalError(err.message || 'Could not load your available books. Please refresh and try again.');
         } finally {
           setUserBooksLoading(false);
         }
@@ -172,8 +112,8 @@ const ExchangeHubPage = () => {
       return;
     }
 
-    if (requestType === 'exchange' && !offeredBookId && userBooks.length > 0) {
-      setModalError('Please select one of your listed books to offer in trade.');
+    if (requestType === 'exchange' && !offeredBookId) {
+      setModalError('To propose an exchange, select one of your own available listed books.');
       return;
     }
 
@@ -183,7 +123,6 @@ const ExchangeHubPage = () => {
 
       const payload = {
         bookId: targetBook._id,
-        ownerId: targetBook.owner?._id || targetBook.owner,
         type: requestType,
         durationDays: requestType === 'borrow' ? Number(durationDays) : undefined,
         offeredBookId: requestType === 'exchange' ? offeredBookId : undefined,
@@ -366,6 +305,8 @@ const ExchangeHubPage = () => {
 
         {loading ? (
           <Loader text="Gathering peer circulating archives..." />
+        ) : catalogError ? (
+          <ErrorAlert message={catalogError} onClose={() => setCatalogError('')} />
         ) : filteredBooks.length === 0 ? (
           <EmptyState
             icon="📚"
@@ -431,7 +372,7 @@ const ExchangeHubPage = () => {
             <Button
               variant="primary"
               isLoading={submitting}
-              disabled={submitting || !agreeTerms}
+              disabled={submitting || !agreeTerms || (requestType === 'exchange' && (!offeredBookId || userBooksLoading))}
               onClick={handleSubmitRequest}
             >
               {requestType === 'exchange' ? 'Send Exchange Proposal' : 'Confirm Borrow Request'}
@@ -498,7 +439,7 @@ const ExchangeHubPage = () => {
                 ) : (
                   <div className="bb-no-books-warning">
                     <p className="text-small" style={{ margin: 0 }}>
-                      ⚠️ <strong>No volumes currently on your shelf:</strong> You don't have any available books listed to offer for a barter exchange. You can still write a proposal message, or <Link to="/books/add" target="_blank" className="text-terracotta">list a book first</Link>.
+                      ⚠️ <strong>No volumes currently on your shelf:</strong> You don't have any available books listed to offer for a barter exchange. Please list an available book first, or <Link to="/books/add" target="_blank" className="text-terracotta">list a book first</Link>.
                     </p>
                   </div>
                 )}
