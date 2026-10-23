@@ -1,5 +1,16 @@
 const mongoose = require('mongoose');
 
+// Get the public backend URL without a trailing slash or /api suffix.
+const getPublicBaseUrl = () =>
+  (
+    process.env.PUBLIC_API_URL ||
+    process.env.RENDER_EXTERNAL_URL ||
+    ''
+  )
+    .trim()
+    .replace(/\/+$/, '')
+    .replace(/\/api$/, '');
+
 const bookSchema = new mongoose.Schema(
   {
     title: {
@@ -75,6 +86,17 @@ const bookSchema = new mongoose.Schema(
         type: String,
       },
     ],
+
+    // Store the cover image in MongoDB, not Render's local disk.
+    coverData: {
+      type: Buffer,
+      select: false,
+    },
+    coverType: {
+      type: String,
+      select: false,
+    },
+
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -93,10 +115,34 @@ const bookSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+
+    // Prevent binary cover data from appearing in normal JSON responses.
+    toJSON: {
+      transform: (doc, ret) => {
+        delete ret.coverData;
+        delete ret.coverType;
+
+        const publicBaseUrl = getPublicBaseUrl();
+
+        if (publicBaseUrl && Array.isArray(ret.images)) {
+          ret.images = ret.images.map((image) =>
+            typeof image === 'string' && image.startsWith('/')
+              ? `${publicBaseUrl}${image}`
+              : image
+          );
+        }
+
+        return ret;
+      },
+    },
   }
 );
 
-// Text index for search functionality in Home/Discovery & Listing modules
-bookSchema.index({ title: 'text', author: 'text', description: 'text' });
+// Preserve existing text-search functionality.
+bookSchema.index({
+  title: 'text',
+  author: 'text',
+  description: 'text',
+});
 
 module.exports = mongoose.model('Book', bookSchema);

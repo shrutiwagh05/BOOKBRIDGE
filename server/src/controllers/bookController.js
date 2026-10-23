@@ -1,4 +1,10 @@
+﻿
+const mongoose = require('mongoose');
 const Book = require('../models/Book');
+
+// Stable cover URL for each book.
+const coverPath = (bookId) =>
+  `/api/books/${bookId}/cover?v=${Date.now()}`;
 
 // @desc    Get all available books with optional search, filters, sorting and limit
 // @route   GET /api/books
@@ -7,17 +13,10 @@ const getBooks = async (req, res, next) => {
   try {
     const { category, type, search, sort, limit } = req.query;
 
-    const filter = {
-      status: 'available',
-    };
+    const filter = { status: 'available' };
 
-    if (category) {
-      filter.category = category;
-    }
-
-    if (type) {
-      filter.listingType = type;
-    }
+    if (category) filter.category = category;
+    if (type) filter.listingType = type;
 
     if (search) {
       filter.$or = [
@@ -27,7 +26,6 @@ const getBooks = async (req, res, next) => {
       ];
     }
 
-    // Sort options: newest (default), oldest, price-asc, price-desc
     const sortMap = {
       newest: { createdAt: -1 },
       oldest: { createdAt: 1 },
@@ -36,8 +34,6 @@ const getBooks = async (req, res, next) => {
     };
 
     const sortOrder = sortMap[sort] || { createdAt: -1 };
-
-    // Optional result limit for homepage sections
     const parsedLimit = limit ? parseInt(limit, 10) : 0;
 
     let query = Book.find(filter)
@@ -84,18 +80,67 @@ const getBookById = async (req, res, next) => {
   }
 };
 
+// @desc    Serve a stored book cover
+// @route   GET /api/books/:id/cover
+// @access  Public
+const getBookCover = async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Book cover not found',
+      });
+    }
+
+    const book = await Book.findById(req.params.id)
+      .select('+coverData +coverType');
+
+    if (!book || !book.coverData || !book.coverType) {
+      return res.status(404).json({
+        success: false,
+        message: 'Book cover not found',
+      });
+    }
+
+    res.set({
+      'Content-Type': book.coverType,
+      'Cache-Control': 'public, max-age=86400',
+      'Cross-Origin-Resource-Policy': 'cross-origin',
+      'X-Content-Type-Options': 'nosniff',
+    });
+
+    return res.send(book.coverData);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Create a new book listing
 // @route   POST /api/books
 // @access  Private
 const createBook = async (req, res, next) => {
   try {
-    const bookData = {
-      ...req.body,
-      owner: req.user._id,
-      images: req.file ? [`/uploads/${req.file.filename}`] : [],
-    };
+    const bookId = new mongoose.Types.ObjectId();
+    const bookData = { ...req.body };
 
-    const book = await Book.create(bookData);
+    // Never accept cover storage fields from user-supplied form data.
+    delete bookData.coverData;
+    delete bookData.coverType;
+
+    const book = new Book({
+      ...bookData,
+      _id: bookId,
+      owner: req.user._id,
+      images: [],
+    });
+
+    if (req.file) {
+      book.coverData = req.file.buffer;
+      book.coverType = req.file.mimetype;
+      book.images = [coverPath(bookId)];
+    }
+
+    await book.save();
 
     res.status(201).json({
       success: true,
@@ -142,7 +187,6 @@ const updateBook = async (req, res, next) => {
       });
     }
 
-    // Ownership protection
     if (book.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -171,10 +215,15 @@ const updateBook = async (req, res, next) => {
       }
     });
 
-    // Replace or remove the existing image when requested
+    // Replace the cover image.
     if (req.file) {
-      book.images = [`/uploads/${req.file.filename}`];
+      book.coverData = req.file.buffer;
+      book.coverType = req.file.mimetype;
+      book.images = [coverPath(book._id)];
     } else if (req.body.removeImage === 'true') {
+      // Remove the stored cover image.
+      book.coverData = undefined;
+      book.coverType = undefined;
       book.images = [];
     }
 
@@ -204,7 +253,6 @@ const deleteBook = async (req, res, next) => {
       });
     }
 
-    // Ownership protection
     if (book.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -254,7 +302,6 @@ const updateBookStatus = async (req, res, next) => {
       });
     }
 
-    // Ownership protection
     if (book.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -278,6 +325,7 @@ const updateBookStatus = async (req, res, next) => {
 module.exports = {
   getBooks,
   getBookById,
+  getBookCover,
   createBook,
   getMyListings,
   updateBook,

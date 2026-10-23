@@ -1,11 +1,5 @@
 ﻿const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-const crypto = require('crypto');
-
-const uploadDirectory = path.resolve(__dirname, '../../uploads');
-
-fs.mkdirSync(uploadDirectory, { recursive: true });
 
 const allowedExtensions = new Set([
   '.jpg',
@@ -20,18 +14,10 @@ const allowedMimeTypes = new Set([
   'image/webp',
 ]);
 
-const storage = multer.diskStorage({
-  destination: (req, file, callback) => {
-    callback(null, uploadDirectory);
-  },
+// Store uploaded images in memory instead of temporary disk.
+const storage = multer.memoryStorage();
 
-  filename: (req, file, callback) => {
-    const extension = path.extname(file.originalname).toLowerCase();
-    const filename = `${crypto.randomBytes(16).toString('hex')}${extension}`;
-    callback(null, filename);
-  },
-});
-
+// Validate the uploaded image format.
 const fileFilter = (req, file, callback) => {
   const extension = path.extname(file.originalname).toLowerCase();
 
@@ -42,9 +28,12 @@ const fileFilter = (req, file, callback) => {
     return callback(null, true);
   }
 
-  callback(new Error('Only JPG, JPEG, PNG, and WEBP images are allowed.'));
+  callback(
+    new Error('Only JPG, JPEG, PNG, and WEBP images are allowed.')
+  );
 };
 
+// Accept one image with a maximum size of 5 MB.
 const upload = multer({
   storage,
   fileFilter,
