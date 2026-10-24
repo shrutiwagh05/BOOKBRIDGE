@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const ExchangeRequest = require('../models/ExchangeRequest');
 const Book = require('../models/Book');
-const Notification = require('../models/Notification');
+const { createNotification } = require('../utils/notificationHelper');
 const { validateExchangeInput } = require('../utils/exchangeValidation');
 
 // @desc    Get user's incoming and outgoing exchange/borrow requests (combined)
@@ -35,27 +35,6 @@ const getIncomingRequests = async (req, res, next) => {
       .populate('requester', 'name email college department rating')
       .sort({ createdAt: -1 });
 
-    // Temporary diagnostic: compare the authenticated owner with recently stored requests.
-    const recentRequests = await ExchangeRequest.find()
-      .select('owner requester book status type createdAt')
-      .populate('book', 'title')
-      .sort({ createdAt: -1 })
-      .limit(25)
-      .lean();
-
-    console.info('[Incoming Requests Diagnostic]', {
-      authenticatedUserId: req.user._id.toString(),
-      returnedCount: requests.length,
-      recentRequests: recentRequests.map((request) => ({
-        requestId: request._id.toString(),
-        bookTitle: request.book?.title || null,
-        ownerId: request.owner?.toString() || null,
-        requesterId: request.requester?.toString() || null,
-        status: request.status,
-        type: request.type,
-        createdAt: request.createdAt,
-      })),
-    });
     res.status(200).json({ success: true, count: requests.length, data: requests });
   } catch (error) {
     next(error);
@@ -99,6 +78,7 @@ const createExchangeRequest = async (req, res, next) => {
         message: `This book is currently ${book.status} and cannot be requested right now.`,
       });
     }
+
     if (book.owner.toString() === req.user._id.toString()) {
       return res.status(400).json({ success: false, message: 'You cannot request your own book.' });
     }
@@ -152,9 +132,7 @@ const createExchangeRequest = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'This listing is not available for exchange.' });
     }
 
-    const targetOwnerId = (req.body.ownerId && mongoose.isValidObjectId(req.body.ownerId))
-      ? req.body.ownerId
-      : book.owner;
+    const targetOwnerId = book.owner;
 
     const exchange = await ExchangeRequest.create({
       book: bookId,
@@ -167,22 +145,17 @@ const createExchangeRequest = async (req, res, next) => {
       status: 'pending',
     });
 
-    console.info('[Exchange Request Created Diagnostic]', {
-      requestId: exchange._id.toString(),
-      bookId: book._id.toString(),
-      bookTitle: book.title,
-      storedOwnerId: exchange.owner.toString(),
-      authenticatedRequesterId: req.user._id.toString(),
-      requestType,
-    });
-
-    // Create notification for book owner
+    // Notify book owner about the new request
     try {
-      await Notification.create({
-        recipient: targetOwnerId || book.owner,
+      await createNotification({
+        recipient: targetOwnerId,
         sender: req.user._id,
-        title: requestType === 'exchange' ? 'New Book Exchange Proposal' : 'New Book Borrow Request',
-        message: `${req.user.name || 'A student'} submitted a ${requestType} request for "${book.title}".`,
+        title: requestType === 'exchange'
+          ? 'New Exchange Request'
+          : 'New Borrow Request',
+        message: requestType === 'exchange'
+          ? `${req.user.name || 'A student'} submitted an exchange request for "${book.title}".`
+          : `${req.user.name || 'A student'} submitted a borrow request for "${book.title}".`,
         type: 'request',
         link: '/exchange/requests',
       });
@@ -197,7 +170,11 @@ const createExchangeRequest = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: `${requestType === 'exchange' ? 'Exchange proposal' : 'Borrow request'} submitted successfully!`,
+      message: `${
+        requestType === 'exchange'
+          ? 'Exchange proposal'
+          : 'Borrow request'
+      } submitted successfully!`,
       data: populatedExchange,
     });
   } catch (error) {
@@ -292,9 +269,9 @@ const acceptExchangeRequest = async (req, res, next) => {
       .populate('requester', 'name email college')
       .populate('owner', 'name email college');
 
-    // Create notification for requester
+    // Notify the requester that their request was accepted
     try {
-      await Notification.create({
+      await createNotification({
         recipient: updated.requester?._id || updated.requester,
         sender: req.user._id,
         title: 'Request Accepted!',
@@ -341,12 +318,12 @@ const rejectExchangeRequest = async (req, res, next) => {
     }
     await request.save();
 
-    // Create notification for requester
+    // Notify the requester about the rejection
     try {
-      await Notification.create({
+      await createNotification({
         recipient: request.requester,
         sender: req.user._id,
-        title: 'Request Update',
+        title: 'Request Rejected',
         message: `Your ${request.type} request was declined by the owner.`,
         type: 'request',
         link: '/exchange/requests',
@@ -383,6 +360,21 @@ const cancelExchangeRequest = async (req, res, next) => {
 
     request.status = 'cancelled';
     await request.save();
+
+    // Notify the book owner about the cancellation
+    try {
+      await createNotification({
+        recipient: request.owner,
+        sender: req.user._id,
+        title: 'Request Cancelled',
+        message: `A ${request.type} request for your book has been cancelled.`,
+        type: 'request',
+        link: '/exchange/requests',
+      });
+    } catch (notifErr) {
+      console.warn('[Notification Error]', notifErr.message);
+    }
+
     res.status(200).json({ success: true, message: 'Your request has been cancelled.', data: request });
   } catch (error) {
     next(error);
@@ -448,6 +440,25 @@ const returnExchangeRequest = async (req, res, next) => {
       .populate('book', 'title author images listingType status')
       .populate('requester', 'name email college')
       .populate('owner', 'name email college');
+
+    // Notify the other party about the return/completion
+    try {
+      const recipientId = updated.owner?.toString() === req.user._id.toString()
+        ? (updated.requester?._id || updated.requester)
+        : (updated.owner?._id || updated.owner);
+      await createNotification({
+        recipient: recipientId,
+        sender: req.user._id,
+        title: 'Book Returned',
+        message: updated.type === 'borrow'
+          ? `The borrowed book "${updated.book?.title || 'the book'}" has been marked as returned.`
+          : `The exchange for "${updated.book?.title || 'the book'}" has been marked as completed.`,
+        type: 'request',
+        link: '/exchange/requests',
+      });
+    } catch (notifErr) {
+      console.warn('[Notification Error]', notifErr.message);
+    }
 
     res.status(200).json({
       success: true,
