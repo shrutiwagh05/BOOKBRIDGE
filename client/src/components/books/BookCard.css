@@ -360,3 +360,105 @@
 .my-listing-cell .bb-book-card .bb-book-card-footer {
   margin-top: 0.75rem;
 }
+
+
+/* Match the class names rendered by BookCard.jsx */
+.bb-book-card-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px;
+  background: var(--color-warm-ivory, #fffaf2);
+  font-family: var(--font-body, Inter, Arial, sans-serif);
+}
+.bb-book-card-header { min-width: 0; }
+.bb-book-card-title {
+  margin: 0 0 5px;
+  color: var(--color-ink-black, #29251f);
+  font-family: var(--font-heading, Georgia, serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.bb-book-card-author {
+  margin: 0 0 10px;
+  color: var(--color-deep-brown, #5a3825);
+  font-family: var(--font-body, Inter, Arial, sans-serif);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.bb-book-card-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+}
+.bb-book-card-category,
+.bb-book-card-condition {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.bb-book-card-location {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 0 0 12px;
+  color: var(--color-muted-taupe, #9b8b78);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.bb-book-card-location > span:first-child { flex-shrink: 0; }
+.bb-book-card-price {
+  min-width: 0;
+  color: var(--color-terracotta, #a65335);
+  font-size: 1.2rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.bb-book-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px dashed var(--color-border-subtle, #ddcbb8);
+}
+.bb-book-card-actions { min-width: 0; max-width: 100%; }
+.bb-book-card-actions .btn,
+.bb-book-card-actions button,
+.bb-book-card-view-link {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.bb-book-card-view-link {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--color-terracotta, #a65335);
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: center;
+}
+.bb-book-card-view-link:hover { filter: brightness(0.95); }
+@media (max-width: 640px) {
+  .bb-book-card-cover { height: 190px; }
+  .bb-book-card-content { padding: 12px; }
+  .bb-book-card-title { font-size: 1rem; }
+  .bb-book-card-footer { align-items: flex-start; }
+}
