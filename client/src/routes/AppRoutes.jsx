@@ -29,6 +29,10 @@ import TransactionHistoryPage from '../pages/dashboard/TransactionHistoryPage';
 // Module 5 Pages
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import NotificationsPage from '../pages/admin/NotificationsPage';
+import StudentNotificationsPage from '../pages/notifications/StudentNotificationsPage';
+import UserManagementPage from '../pages/admin/UserManagementPage';
+import BookManagementPage from '../pages/admin/BookManagementPage';
+import RequestManagementPage from '../pages/admin/RequestManagementPage';
 
 // Auth Pages
 import LoginPage from '../pages/auth/LoginPage';
@@ -179,10 +183,15 @@ const AppRoutes = () => {
           path="notifications"
           element={
             <ProtectedRoute>
-              <NotificationsPage />
+              <StudentNotificationsPage />
             </ProtectedRoute>
           }
         />
+
+
+        <Route path="admin/users" element={<ProtectedRoute requireRole="admin"><UserManagementPage /></ProtectedRoute>} />
+        <Route path="admin/books" element={<ProtectedRoute requireRole="admin"><BookManagementPage /></ProtectedRoute>} />
+        <Route path="admin/requests" element={<ProtectedRoute requireRole="admin"><RequestManagementPage /></ProtectedRoute>} />
 
         {/* Auth Routes */}
         <Route path="login" element={<LoginPage />} />
